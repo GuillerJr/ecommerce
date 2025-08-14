@@ -11,29 +11,31 @@ import TournamentMatchesPageClient from "@/components/admin/tournaments/Tourname
 
 export const dynamic = 'force-dynamic';
 
-export default async function TournamentMatchesPage({ params }: { params: { id: string } }) {
-  const id = params.id;
+export default async function TournamentMatchesPage(
+  { params }: { params: Promise<{ id: string }> } // 👈 ahora Promise
+) {
+  const { id } = await params; // 👈 esperar antes de usar
   const tournament = await getTournamentDetails(id);
-  
+
   if (!tournament) {
     notFound();
   }
-  
+
   const returnHref = `/admin/torneos/liga`;
 
   return (
     <div className="p-4 md:p-8">
-        <div className="mb-4">
-            <Button asChild variant="outline">
-                <Link href={returnHref}>
-                    <ChevronLeft className="mr-2 h-4 w-4"/>
-                    Volver a Torneos de Liga
-                </Link>
-            </Button>
-        </div>
-        <TournamentMatchesPageClient 
-            initialTournament={tournament}
-        />
+      <div className="mb-4">
+        <Button asChild variant="outline">
+          <Link href={returnHref}>
+            <ChevronLeft className="mr-2 h-4 w-4" />
+            Volver a Torneos de Liga
+          </Link>
+        </Button>
+      </div>
+      <TournamentMatchesPageClient
+        initialTournament={tournament}
+      />
     </div>
   );
 }

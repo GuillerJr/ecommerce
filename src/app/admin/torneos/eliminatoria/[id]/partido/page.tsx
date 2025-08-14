@@ -11,29 +11,32 @@ import TournamentMatchesPageClient from "@/components/admin/tournaments/Tourname
 
 export const dynamic = 'force-dynamic';
 
-export default async function TournamentMatchesPage({ params }: { params: { id: string } }) {
-  const id = params.id;
-  const tournament = await getTournamentDetails(id);
+export default async function TournamentMatchesPage(
+  { params }: { params: Promise<{ id: string }> } // 👈 params ahora es Promise
+) {
+  const { id } = await params; // 👈 esperamos antes de usarlo
+    const tournament = await getTournamentDetails(id);
   
-  if (!tournament) {
-    notFound();
+    if (!tournament) {
+      notFound();
+    }
+  
+    const returnHref = `/admin/torneos/eliminatoria`;
+
+    return (
+      <div className="p-4 md:p-8">
+        <div className="mb-4">
+          <Button asChild variant="outline">
+            <Link href={returnHref}>
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Volver a Torneos de Eliminatoria
+            </Link>
+          </Button>
+        </div>
+        <TournamentMatchesPageClient
+          initialTournament={tournament}
+        />
+      </div>
+    );
   }
   
-  const returnHref = `/admin/torneos/eliminatoria`;
-
-  return (
-    <div className="p-4 md:p-8">
-        <div className="mb-4">
-            <Button asChild variant="outline">
-                <Link href={returnHref}>
-                    <ChevronLeft className="mr-2 h-4 w-4"/>
-                    Volver a Torneos de Eliminatoria
-                </Link>
-            </Button>
-        </div>
-        <TournamentMatchesPageClient 
-            initialTournament={tournament}
-        />
-    </div>
-  );
-}

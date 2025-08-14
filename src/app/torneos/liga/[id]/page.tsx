@@ -1,5 +1,3 @@
-
-
 /**
  * @fileoverview Página de detalles de un torneo específico para los usuarios.
  */
@@ -11,8 +9,11 @@ import TournamentPublicDetailPage from '@/components/tournaments/TournamentPubli
 
 export const dynamic = 'force-dynamic';
 
-export default async function TournamentDetailPage({ params }: { params: { id: string } }) {
-  const tournament = await getTournamentDetails(params.id);
+export default async function TournamentDetailPage(
+  { params }: { params: Promise<{ id: string }> } // 👈 ahora es Promise
+) {
+  const { id } = await params; // 👈 lo esperamos antes de usarlo
+  const tournament = await getTournamentDetails(id);
   const users = await getUsers();
 
   if (!tournament) {
