@@ -45,7 +45,7 @@ export async function generateMetadata(): Promise<Metadata> {
         },
         description: storeConfig.description,
         icons: {
-          icon: [{ url: '/assets/logo.png' }],
+          icon: '/assets/logo.png',
         },
       };
     }
@@ -57,7 +57,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: "Coral Cart",
     description: "Tu tienda de equipamiento deportivo de alto rendimiento.",
     icons: {
-      icon: [{ url: '/assets/logo.png' }],
+      icon: '/assets/logo.png',
     },
   };
 }
@@ -92,4 +92,3 @@ export default async function RootLayout({
     </html>
   );
 }
-
