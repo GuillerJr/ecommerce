@@ -76,7 +76,7 @@ export default async function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
        <head>
-        <link rel="icon" href="/asstes/logo.png" sizes="any" />
+        <link rel="icon" href="/assets/logo.png" sizes="any" />
       </head>
       <body className={cn("min-h-screen bg-background font-body antialiased", inter.variable, spaceGrotesk.variable)} suppressHydrationWarning>
         <Providers>
