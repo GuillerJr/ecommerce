@@ -1,4 +1,5 @@
 
+
 /**
  * @fileoverview Layout principal (raíz) de la aplicación.
  * Este componente es responsable de definir la estructura HTML base,
@@ -44,7 +45,7 @@ export async function generateMetadata(): Promise<Metadata> {
         },
         description: storeConfig.description,
         icons: {
-          icon: '/favicon.ico',
+          icon: [{ url: '/assets/logo.png' }],
         },
       };
     }
@@ -56,7 +57,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: "Coral Cart",
     description: "Tu tienda de equipamiento deportivo de alto rendimiento.",
     icons: {
-      icon: '/favicon.ico',
+      icon: [{ url: '/assets/logo.png' }],
     },
   };
 }
@@ -91,3 +92,4 @@ export default async function RootLayout({
     </html>
   );
 }
+
