@@ -1,5 +1,4 @@
 
-
 /**
  * @fileoverview Layout principal (raíz) de la aplicación.
  * Este componente es responsable de definir la estructura HTML base,
@@ -44,9 +43,6 @@ export async function generateMetadata(): Promise<Metadata> {
           template: `%s | ${storeConfig.name}`,
         },
         description: storeConfig.description,
-        icons: {
-          icon: '/assets/logo.png',
-        },
       };
     }
   } catch (error) {
@@ -54,11 +50,8 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 
   return {
-    title: "Coral Cart",
+    title: "HackTrickStore",
     description: "Tu tienda de equipamiento deportivo de alto rendimiento.",
-    icons: {
-      icon: '/assets/logo.png',
-    },
   };
 }
 
@@ -82,6 +75,9 @@ export default async function RootLayout({
 
   return (
     <html lang="es" suppressHydrationWarning>
+       <head>
+        <link rel="icon" href="/asstes/logo.png" sizes="any" />
+      </head>
       <body className={cn("min-h-screen bg-background font-body antialiased", inter.variable, spaceGrotesk.variable)} suppressHydrationWarning>
         <Providers>
             <SiteLayout storeConfig={storeConfig}>
