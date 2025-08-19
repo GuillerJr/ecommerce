@@ -41,7 +41,7 @@ export function generateInvoice(invoiceData: InvoiceInput) {
       "@xmlns:ds": "http://www.w3.org/2000/09/xmldsig#",
       "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
       "@id": "comprobante",
-      "@version": "1.0.0",
+      "@version": "1.1.0", // Versión actualizada según especificación
       infoTributaria: { ...invoiceData.infoTributaria, claveAcceso: accessKey },
       infoFactura: invoiceData.infoFactura,
       detalles: invoiceData.detalles,

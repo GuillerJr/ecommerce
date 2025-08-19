@@ -1,8 +1,9 @@
 
+
 'use server';
 
 import type { Order, Product, StoreConfig } from '@/types';
-import { getOrderByIdFromDb, updateOrderStatusInDb } from '../data/orders';
+import { getOrderByIdFromDb } from '../data/orders';
 import { getStoreConfigFromDb, updateStoreConfigInDb } from '../data/store';
 import {
   generateInvoice,
@@ -14,14 +15,22 @@ import {
 import { generateRidePdf } from '../einvoice/ride';
 import { sendEmail } from '../email.server';
 import { query } from '../db.server';
+import { revalidatePath } from 'next/cache';
 
-const isProduction = process.env.NODE_ENV === 'production';
-const SRI_RECEPTION_URL = isProduction
-    ? "https://cel.sri.gob.ec/comprobantes-electronicos-ws/RecepcionComprobantesOffline?wsdl"
-    : "https://celcer.sri.gob.ec/comprobantes-electronicos-ws/RecepcionComprobantesOffline?wsdl";
-const SRI_AUTHORIZATION_URL = isProduction
-    ? "https://cel.sri.gob.ec/comprobantes-electronicos-ws/AutorizacionComprobantesOffline?wsdl"
-    : "https://celcer.sri.gob.ec/comprobantes-electronicos-ws/AutorizacionComprobantesOffline?wsdl";
+const getSriUrls = (environment: '1' | '2') => {
+  if (environment === '2') {
+    // Producción
+    return {
+      reception: "https://cel.sri.gob.ec/comprobantes-electronicos-ws/RecepcionComprobantesOffline?wsdl",
+      authorization: "https://cel.sri.gob.ec/comprobantes-electronicos-ws/AutorizacionComprobantesOffline?wsdl",
+    };
+  }
+  // Pruebas
+  return {
+    reception: "https://celcer.sri.gob.ec/comprobantes-electronicos-ws/RecepcionComprobantesOffline?wsdl",
+    authorization: "https://celcer.sri.gob.ec/comprobantes-electronicos-ws/AutorizacionComprobantesOffline?wsdl",
+  };
+};
 
 
 export async function generateEInvoiceAction(orderId: string, allProducts: Product[]) {
@@ -36,16 +45,18 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
     if (!process.env.E_SIGNATURE_PASSWORD) throw new Error("La contraseña de la firma electrónica no está configurada.");
     if (order.eInvoiceAuthorization) throw new Error("Este pedido ya tiene una factura autorizada.");
 
+    const sriUrls = getSriUrls(storeConfig.eInvoicingEnvironment);
+
     // 2. Prepare invoice data for open-factura
     const taxRateCode = storeConfig.taxRate === 12 ? '2' : (storeConfig.taxRate === 15 ? '4' : '0');
 
     const invoiceData = {
       infoTributaria: {
-        ambiente: isProduction ? '2' : '1',
+        ambiente: storeConfig.eInvoicingEnvironment,
         tipoEmision: '1' as const,
         razonSocial: storeConfig.name,
         nombreComercial: storeConfig.name,
-        ruc: storeConfig.address.postalCode, // Assuming RUC is stored here as per previous context
+        ruc: storeConfig.address.postalCode, // Assuming RUC is stored here
         codDoc: '01' as const,
         estab: '001',
         ptoEmi: '001',
@@ -53,7 +64,7 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
         dirMatriz: storeConfig.address.street,
       },
       infoFactura: {
-        fechaEmision: new Date(order.date).toLocaleDateString('es-EC', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+        fechaEmision: new Date(order.date).toLocaleDateString('es-EC', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '/'),
         dirEstablecimiento: storeConfig.address.street,
         obligadoContabilidad: 'SI' as const,
         tipoIdentificacionComprador: '05' as const, // Cédula
@@ -66,7 +77,7 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
           totalImpuesto: [
             {
               codigo: '2' as const,
-              codigoPorcentaje: taxRateCode,
+              codigoPorcentaje: taxRateCode as '0' | '2' | '3' | '4' | '6' | '7' | '8',
               baseImponible: (order.subtotal - order.discountAmount).toFixed(2),
               valor: order.taxAmount?.toFixed(2) || '0.00',
               tarifa: String(storeConfig.taxRate || 0)
@@ -81,6 +92,8 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
             {
               formaPago: '01', // SIN UTILIZACION DEL SISTEMA FINANCIERO
               total: order.total.toFixed(2),
+              plazo: '0',
+              unidadTiempo: 'dias'
             },
           ],
         },
@@ -92,6 +105,7 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
           const taxValue = (itemTotal * (storeConfig.taxRate || 0) / 100).toFixed(2);
           return {
             codigoPrincipal: item.productId.substring(0, 25),
+            codigoAuxiliar: item.productId.substring(0, 25),
             descripcion: product?.name || 'Producto',
             cantidad: item.quantity.toString(),
             precioUnitario: item.price.toFixed(6), // SRI requires 6 decimal places for unit price
@@ -122,14 +136,14 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
     const signedXml = await signXml(signatureBuffer, process.env.E_SIGNATURE_PASSWORD, invoiceXml);
 
     // 5. Send to SRI for reception
-    const receptionResult = await documentReception(signedXml, SRI_RECEPTION_URL);
+    const receptionResult = await documentReception(signedXml, sriUrls.reception);
     if (receptionResult?.estado !== 'RECIBIDA') {
         throw new Error(`SRI: ${receptionResult?.comprobantes?.comprobante?.mensajes?.mensaje?.mensaje || 'Error en la recepción.'}`);
     }
 
     // 6. Authorize with SRI
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for SRI to process
-    const authorizationResult = await documentAuthorization(accessKey, SRI_AUTHORIZATION_URL);
+    await new Promise(resolve => setTimeout(resolve, 3000)); // Wait for SRI to process
+    const authorizationResult = await documentAuthorization(accessKey, sriUrls.authorization);
     const authorization = authorizationResult?.autorizaciones?.autorizacion;
 
     if (authorization?.estado !== 'AUTORIZADO') {

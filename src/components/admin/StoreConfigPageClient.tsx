@@ -18,6 +18,7 @@ import Image from "next/image";
 import { Switch } from "../ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { Separator } from "../ui/separator";
+import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 
 const currencies = [
     { code: 'USD', symbol: '$' },
@@ -62,6 +63,7 @@ const formSchema = z.object({
   eSignatureFile: z.string().optional(),
   isEInvoicingEnabled: z.boolean().default(false),
   nextInvoiceNumber: z.coerce.number().int().min(1, "El número debe ser al menos 1."),
+  eInvoicingEnvironment: z.enum(['1', '2']), // 1 for Pruebas, 2 for Produccion
 });
 
 interface StoreConfigPageClientProps {
@@ -81,6 +83,7 @@ export default function StoreConfigPageClient({ initialConfig }: StoreConfigPage
       eSignatureFile: initialConfig.eSignatureFile || '',
       isEInvoicingEnabled: initialConfig.isEInvoicingEnabled || false,
       nextInvoiceNumber: initialConfig.nextInvoiceNumber || 1,
+      eInvoicingEnvironment: initialConfig.eInvoicingEnvironment || '1',
     },
   });
 
@@ -307,26 +310,29 @@ export default function StoreConfigPageClient({ initialConfig }: StoreConfigPage
                                     <FormMessage />
                                 </FormItem>
                             )}/>
-                            <FormField control={form.control} name="taxRate" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Porcentaje de IVA (%)</FormLabel>
-                                    <FormControl>
-                                        <div className="relative">
-                                            <Input 
-                                                type="number" 
-                                                step="0.01"
-                                                {...field} 
-                                                value={field.value ?? 0}
-                                                onChange={e => field.onChange(e.target.value === '' ? 0 : e.target.valueAsNumber)}
-                                                placeholder="Ej. 12"
-                                                className="pl-8"
-                                            />
-                                            <Percent className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                        </div>
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}/>
+                             <FormField
+                                control={form.control}
+                                name="taxRate"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Porcentaje de IVA (%)</FormLabel>
+                                        <Select onValueChange={(value) => field.onChange(parseInt(value, 10))} value={String(field.value ?? 0)}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Selecciona un IVA" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="0">0%</SelectItem>
+                                                <SelectItem value="12">12%</SelectItem>
+                                                <SelectItem value="15">15%</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormDescription>Selecciona la tarifa de IVA para los cálculos de la factura.</FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
                     </CardContent>
                  </Card>
@@ -342,6 +348,32 @@ export default function StoreConfigPageClient({ initialConfig }: StoreConfigPage
                                 <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                             </FormItem>
                         )}/>
+                        <FormField
+                            control={form.control}
+                            name="eInvoicingEnvironment"
+                            render={({ field }) => (
+                                <FormItem className="space-y-3">
+                                <FormLabel>Ambiente SRI</FormLabel>
+                                <FormControl>
+                                    <RadioGroup
+                                    onValueChange={field.onChange}
+                                    value={field.value}
+                                    className="flex space-x-4"
+                                    >
+                                    <FormItem className="flex items-center space-x-2 space-y-0">
+                                        <FormControl><RadioGroupItem value="1" /></FormControl>
+                                        <FormLabel className="font-normal">Pruebas</FormLabel>
+                                    </FormItem>
+                                    <FormItem className="flex items-center space-x-2 space-y-0">
+                                        <FormControl><RadioGroupItem value="2" /></FormControl>
+                                        <FormLabel className="font-normal">Producción</FormLabel>
+                                    </FormItem>
+                                    </RadioGroup>
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                         <FormField
                             control={form.control}
                             name="eSignatureFile"

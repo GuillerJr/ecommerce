@@ -95,6 +95,8 @@ export type Order = {
   items: OrderProduct[];
   trackingHistory: TrackingEvent[];
   paymentMethod?: 'PayPal' | 'Transferencia Bancaria' | 'Punto de Venta';
+  eInvoiceStatus?: 'PENDING' | 'AUTHORIZED' | 'REJECTED' | 'ERROR';
+  eInvoiceAuthorization?: string;
 };
 
 export type KardexEntry = {
@@ -251,6 +253,10 @@ export type StoreConfig = {
             clientId?: string; // Public ID, safe to send to client
         };
     };
+    eSignatureFile?: string; // base64 encoded .p12 file
+    isEInvoicingEnabled: boolean;
+    nextInvoiceNumber: number;
+    eInvoicingEnvironment: '1' | '2';
 };
 
 export type Giveaway = {
