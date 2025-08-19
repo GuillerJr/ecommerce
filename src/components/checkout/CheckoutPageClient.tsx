@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,7 +19,7 @@ import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState, useMemo, useCallback } from "react";
-import type { Coupon, Address, StoreConfig } from "@/types";
+import type { Coupon, Address, StoreConfig, Product } from "@/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
@@ -27,6 +28,7 @@ import { createOrderAction, checkStockAction } from "@/lib/actions/orders";
 import { addAddressAction } from "@/lib/actions/users";
 import { getCouponByCodeAction } from "@/lib/actions/coupons";
 import { createPaypalOrderAction, capturePaypalOrderAction } from "@/lib/actions/paypal";
+import { getProductsAction } from "@/lib/actions/products";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "El nombre es requerido." }),
@@ -86,7 +88,6 @@ export default function CheckoutPageClient({ storeConfig }: { storeConfig: Store
   const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
   const [isPaymentStep, setIsPaymentStep] = useState(false);
   const [isVerifyingStock, setIsVerifyingStock] = useState(false);
-
 
   const subtotal = totalPrice;
   const priceAfterDiscount = subtotal - couponDiscount;

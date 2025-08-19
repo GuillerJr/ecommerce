@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
-import { updateOrderStatusAction, getStoreConfigAction, generateEInvoiceAction } from "@/lib/actions";
+import { updateOrderStatusAction, getStoreConfigAction } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { Pagination, PaginationContent, PaginationItem } from "@/components/ui/pagination";
 import { format, type Locale } from 'date-fns';
@@ -28,8 +28,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { cn } from "@/lib/utils";
 import { Calendar } from "../ui/calendar";
 import { type DateRange } from "react-day-picker";
-import JSZip from 'jszip';
-import { generateRidePdf } from "@/lib/einvoice/ride";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -88,9 +86,6 @@ export default function OrdersPageClient({ initialOrders, allProducts }: OrdersP
     const [currentPage, setCurrentPage] = useState(1);
     const [storeConfig, setStoreConfig] = useState<StoreConfig | null>(null);
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
-    const [isExportingInvoices, setIsExportingInvoices] = useState(false);
-    const [isGeneratingEInvoice, setIsGeneratingEInvoice] = useState(false);
-
 
     useEffect(() => {
         getStoreConfigAction().then(result => {
@@ -204,18 +199,6 @@ export default function OrdersPageClient({ initialOrders, allProducts }: OrdersP
         doc.save(`reporte_pedidos_${new Date().toISOString().split('T')[0]}.pdf`);
     };
 
-    const handleGenerateEInvoice = async (order: Order) => {
-        setIsGeneratingEInvoice(true);
-        const result = await generateEInvoiceAction(order.id, allProducts);
-        if (result.success) {
-            toast({ title: "Factura Electrónica Generada", description: `La factura para el pedido #${order.id.substring(0,8)} ha sido autorizada.` });
-            router.refresh();
-        } else {
-            toast({ title: "Error al generar Factura", description: result.message, variant: "destructive", duration: 10000 });
-        }
-        setIsGeneratingEInvoice(false);
-    };
-
     return (
         <div className="p-4 md:p-8">
             <div className="flex items-center justify-between mb-6">
@@ -321,17 +304,13 @@ export default function OrdersPageClient({ initialOrders, allProducts }: OrdersP
                                     <TableCell>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button size="icon" variant="ghost" disabled={isGeneratingEInvoice}>
+                                                <Button size="icon" variant="ghost">
                                                     <MoreHorizontal className="h-4 w-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
                                                 <DropdownMenuItem onClick={() => handleViewDetails(order.id)}>
                                                     Ver Detalles y Actualizar
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleGenerateEInvoice(order)} disabled={!storeConfig?.isEInvoicingEnabled || isGeneratingEInvoice || !!order.eInvoiceAuthorization}>
-                                                    <FileText className="mr-2 h-4 w-4"/>
-                                                    {isGeneratingEInvoice ? "Generando..." : "Generar Factura Electrónica"}
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>

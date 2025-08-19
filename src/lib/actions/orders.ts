@@ -2,13 +2,16 @@
 
 'use server';
 
-import type { Order, OrderStatus, TrackingEvent, Coupon, User, CartItem } from '@/types';
+import type { Order, OrderStatus, TrackingEvent, Coupon, User, CartItem, Product } from '@/types';
 import { createOrderInDb, updateOrderStatusInDb, getOrdersFromDb } from '@/lib/data/orders';
 import { revalidatePath } from 'next/cache';
 import { logActivity } from '../data/activity';
 import { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } from '../email.server';
 import { getUserById } from '../data/users';
 import { getClient } from '../db.server';
+import { generateEInvoiceAction } from './einvoice';
+import { getStoreConfigFromDb } from '../data/store';
+import { getProductsFromDb } from '../data/products';
 
 
 export async function checkStockAction(items: CartItem[]): Promise<{ success: boolean; message?: string }> {
@@ -63,7 +66,20 @@ export async function createOrderAction(orderData: { userId?: string, customerNa
     try {
         const order = await createOrderInDb(orderData, items, taxRate, couponCode);
         
-        // Solo envía correo de confirmación si no es un email de placeholder del POS
+        // --- E-Invoice Generation ---
+        const storeConfig = await getStoreConfigFromDb();
+        if (storeConfig.isEInvoicingEnabled) {
+            try {
+                const allProducts = await getProductsFromDb();
+                await generateEInvoiceAction(order.id, allProducts);
+            } catch (eInvoiceError) {
+                console.error(`Failed to generate e-invoice for order ${order.id}:`, eInvoiceError);
+                // The order is created, but the e-invoice failed. The status is handled inside generateEInvoiceAction.
+            }
+        }
+        // --- End E-Invoice Generation ---
+
+        // Only sends confirmation email if it's not a placeholder POS email
         if (!order.email.endsWith('@hacktrick.store')) {
             await sendOrderConfirmationEmail(order);
         }
@@ -86,7 +102,7 @@ export async function updateOrderStatusAction(orderId: string, newStatus: Order[
             return { success: false, message: 'No se encontró el pedido a actualizar.' };
         }
 
-        // Solo envía correo de actualización si no es un email de placeholder del POS
+        // Only sends update email if it's not a placeholder POS email
         if (!order.email.endsWith('@hacktrick.store')) {
             await sendOrderStatusUpdateEmail(order);
         }

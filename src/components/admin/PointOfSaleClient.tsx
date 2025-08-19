@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -48,7 +49,7 @@ interface PointOfSaleClientProps {
   allDiscounts: Discount[];
 }
 
-export default function PointOfSaleClient({ allProducts, allCoupons, allDiscounts }: PointOfSaleClientProps) {
+export default function PointOfSaleClient({ allProducts, allDiscounts }: PointOfSaleClientProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [couponCode, setCouponCode] = useState('');
