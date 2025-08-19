@@ -1,16 +1,21 @@
+/**
+ * @fileoverview Utilidades para la generación de la clave de acceso de 49 dígitos
+ * requerida por el SRI para cada comprobante electrónico.
+ */
 
+/**
+ * @type {GenerateAccessKey}
+ * Define la estructura de datos necesaria para generar la clave de acceso.
+ * @property {Date} date - Fecha de emisión del comprobante.
+ * @property {"01" | ...} codDoc - Código del tipo de documento (ej. '01' para factura).
+ * @property {string} ruc - RUC del emisor.
+ * @property {"1" | "2"} environment - Ambiente (1: Pruebas, 2: Producción).
+ * @property {string} establishment - Código del establecimiento (3 dígitos).
+ * @property {string} emissionPoint - Código del punto de emisión (3 dígitos).
+ * @property {string} sequential - Secuencial del comprobante (9 dígitos).
+ */
 export type GenerateAccessKey = {
   date: Date;
-  /*
-  FACTURA 01
-  LIQUIDACIÓN DE COMPRA DE
-  BIENES Y PRESTACIÓN DE
-  SERVICIOS 03
-  NOTA DE CRÉDITO 04
-  NOTA DE DÉBITO 05
-  GUÍA DE REMISIÓN 06
-  COMPROBANTE DE RETENCIÓN 07
-  */
   codDoc: "01" | "03" | "04" | "05" | "06" | "07";
   ruc: string;
   environment: "1" | "2";
@@ -19,39 +24,58 @@ export type GenerateAccessKey = {
   sequential: string;
 };
 
+/**
+ * Genera la clave de acceso de 49 dígitos.
+ * @param {GenerateAccessKey} accessKeyData - Los datos para construir la clave.
+ * @returns {string} La clave de acceso de 49 dígitos.
+ */
 export function generateAccessKey(accessKeyData: GenerateAccessKey) {
   let accessKey = "";
-  accessKey += formatDateToDDMMYYYY(accessKeyData.date); // Fecha de emisión
-  accessKey += accessKeyData.codDoc; // Tipo de comprobante
-  accessKey += accessKeyData.ruc; // Número de RUC
-  accessKey += accessKeyData.environment; // Tipo de ambiente
-  accessKey += accessKeyData.establishment; // Establecimiento
-  accessKey += accessKeyData.emissionPoint; // Punto de emision
-  accessKey += accessKeyData.sequential; // Secuencial
-  accessKey += generateRandomEightDigitNumber(); // Código numérico
-  accessKey += "1"; // Tipo de emisión
-  accessKey += generateVerificatorDigit(accessKey); // Dígito verificador
+  accessKey += formatDateToDDMMYYYY(accessKeyData.date);
+  accessKey += accessKeyData.codDoc;
+  accessKey += accessKeyData.ruc;
+  accessKey += accessKeyData.environment;
+  accessKey += accessKeyData.establishment;
+  accessKey += accessKeyData.emissionPoint;
+  accessKey += accessKeyData.sequential;
+  accessKey += generateRandomEightDigitNumber(); // Código numérico aleatorio
+  accessKey += "1"; // Tipo de emisión (siempre '1' para Normal)
+  accessKey += generateVerificatorDigit(accessKey); // Dígito verificador (Módulo 11)
   return accessKey;
 }
 
+/**
+ * Formatea una fecha a formato ddmmaaaa.
+ * @param {Date} date - La fecha a formatear.
+ * @returns {string} La fecha en formato ddmmaaaa.
+ */
 function formatDateToDDMMYYYY(date: Date) {
   let day = date.getDate();
-  let month = date.getMonth() + 1; // getMonth() returns 0-11
+  let month = date.getMonth() + 1; // getMonth() es base 0
   let year = date.getFullYear();
 
-  // Pad day and month with a leading zero if they are less than 10
+  // Asegura que día y mes tengan dos dígitos.
   const finalDay = day < 10 ? "0" + day : day;
   const finalMonth = month < 10 ? "0" + month : month;
 
   return `${finalDay}${finalMonth}${year}`;
 }
 
+/**
+ * Genera un número aleatorio de 8 dígitos para la clave de acceso.
+ * @returns {number} Un número aleatorio de 8 dígitos.
+ */
 function generateRandomEightDigitNumber(): number {
   const min = 10000000;
   const max = 99999999;
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+/**
+ * Calcula el dígito verificador (Módulo 11) para la clave de acceso.
+ * @param {string} accessKey - La clave de acceso de 48 dígitos (sin el dígito verificador).
+ * @returns {number} El dígito verificador calculado.
+ */
 function generateVerificatorDigit(accessKey: string) {
   let result = 0;
   let addition = 0;
@@ -61,7 +85,7 @@ function generateVerificatorDigit(accessKey: string) {
     multiple > 2 ? multiple-- : (multiple = 7);
   }
   result = 11 - (addition % 11);
-  result === 10 ? (result = 1) : (result = result);
-  result === 11 ? (result = 0) : (result = result);
+  if (result === 10) result = 1;
+  if (result === 11) result = 0;
   return result;
 }

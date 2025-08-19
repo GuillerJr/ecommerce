@@ -1,8 +1,19 @@
+/**
+ * @fileoverview Contiene las funciones para el firmado de documentos XML utilizando un
+ * certificado P12, siguiendo el estándar XAdES-BES.
+ */
 
 import * as forge from "node-forge";
 import { readFileSync } from "fs";
 import fetch from "node-fetch";
 
+// --- Funciones auxiliares para obtener archivos ---
+
+/**
+ * Lee un archivo .p12 desde el sistema de archivos local.
+ * @param {string} path - La ruta al archivo .p12.
+ * @returns {ArrayBuffer} El contenido del archivo como un ArrayBuffer.
+ */
 export function getP12FromLocalFile(path: string) {
   const file = readFileSync(path);
   const buffer = file.buffer.slice(
@@ -12,6 +23,11 @@ export function getP12FromLocalFile(path: string) {
   return buffer;
 }
 
+/**
+ * Descarga un archivo .p12 desde una URL.
+ * @param {string} url - La URL del archivo .p12.
+ * @returns {Promise<ArrayBuffer>} Una promesa que se resuelve con el contenido del archivo.
+ */
 export async function getP12FromUrl(url: string) {
   const file = await fetch(url)
     .then((response) => response.arrayBuffer())
@@ -19,11 +35,21 @@ export async function getP12FromUrl(url: string) {
   return file;
 }
 
+/**
+ * Lee un archivo XML desde el sistema de archivos local.
+ * @param {string} path - La ruta al archivo XML.
+ * @returns {string} El contenido del archivo como una cadena de texto.
+ */
 export function getXMLFromLocalFile(path: string) {
   const file = readFileSync(path, "utf8");
   return file;
 }
 
+/**
+ * Descarga un archivo XML desde una URL.
+ * @param {string} url - La URL del archivo XML.
+ * @returns {Promise<string>} Una promesa que se resuelve con el contenido del archivo.
+ */
 export async function getXMLFromLocalUrl(url: string) {
   const file = await fetch(url)
     .then((response) => response.text())
@@ -31,6 +57,14 @@ export async function getXMLFromLocalUrl(url: string) {
   return file;
 }
 
+// --- Funciones criptográficas y de formato ---
+
+/**
+ * Calcula el hash SHA-1 de un texto y lo devuelve en formato Base64.
+ * @param {string} text - El texto a hashear.
+ * @param {forge.Encoding} [encoding="utf8"] - La codificación del texto.
+ * @returns {string} El hash en Base64.
+ */
 function sha1Base64(text: string, encoding: forge.Encoding = "utf8") {
   let md = forge.md.sha1.create();
   md.update(text, encoding);
@@ -60,6 +94,13 @@ function getRandomNumber(min = 990, max = 9999) {
   return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
+/**
+ * Firma un documento XML con un certificado P12.
+ * @param {ArrayBuffer} p12Data - El contenido del archivo .p12.
+ * @param {string} p12Password - La contraseña del archivo .p12.
+ * @param {string} xmlData - El contenido del XML a firmar.
+ * @returns {Promise<string>} El documento XML firmado.
+ */
 export async function signXml(
   p12Data: ArrayBuffer,
   p12Password: string,
@@ -67,12 +108,14 @@ export async function signXml(
 ) {
   const arrayBuffer = p12Data;
   let xml = xmlData;
+  // Normaliza el XML para el proceso de firma.
   xml = xml.replace(/\s+/g, " ");
   xml = xml.trim();
   xml = xml.replace(/(?<=\>)(\r?\n)|(\r?\n)(?=\<\/)/g, "");
   xml = xml.trim();
   xml = xml.replace(/(?<=\>)(\s*)/g, "");
 
+  // Decodifica el archivo P12.
   const arrayUint8 = new Uint8Array(arrayBuffer);
   const base64 = forge.util.binary.base64.encode(arrayUint8);
   const der = forge.util.decode64(base64);
@@ -124,6 +167,7 @@ export async function signXml(
 
   certificate = cert.cert;
 
+  // Verifica la validez del certificado.
   const notBefore = certificate!.validity["notBefore"];
   const notAfter = certificate!.validity["notAfter"];
   const date = new Date();
@@ -132,6 +176,7 @@ export async function signXml(
     throw new Error("Expired certificate");
   }
 
+  // Extrae la clave privada y la información del certificado.
   const key = (pkcs8 as any).key ?? (pkcs8 as any).asn1;
   const certificateX509_pem = forge.pki.certificateToPem(certificate!);
 
@@ -161,6 +206,7 @@ export async function signXml(
     "utf8"
   );
 
+  // Construcción de la firma XAdES-BES.
   const nameSpaces =
     'xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:etsi="http://uri.etsi.org/01903/v1.3.2#"';
 
@@ -344,5 +390,6 @@ export async function signXml(
   xadesBes += "</ds:Object>";
   xadesBes += "</ds:Signature>";
 
+  // Inserta la firma XAdES-BES en el XML original.
   return xml.replace(/(<[^<]+)$/, xadesBes + "$1");
 }
