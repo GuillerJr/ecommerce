@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, ClipboardList, CheckCircle2, Package, Truck, CircleDotDashed, FileDown, Mail, Phone, Home as HomeIcon, User as UserIcon, CalendarIcon } from "lucide-react";
+import { MoreHorizontal, ClipboardList, CheckCircle2, Package, Truck, CircleDotDashed, FileDown, Mail, Phone, Home as HomeIcon, User as UserIcon, CalendarIcon, FileText } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
-import { updateOrderStatusAction, getStoreConfigAction } from "@/lib/actions";
+import { updateOrderStatusAction, getStoreConfigAction, generateEInvoiceAction } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { Pagination, PaginationContent, PaginationItem } from "@/components/ui/pagination";
 import { format, type Locale } from 'date-fns';
@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { Calendar } from "../ui/calendar";
 import { type DateRange } from "react-day-picker";
 import JSZip from 'jszip';
+import { generateRidePdf } from "@/lib/einvoice/ride";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -88,6 +89,7 @@ export default function OrdersPageClient({ initialOrders, allProducts }: OrdersP
     const [storeConfig, setStoreConfig] = useState<StoreConfig | null>(null);
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
     const [isExportingInvoices, setIsExportingInvoices] = useState(false);
+    const [isGeneratingEInvoice, setIsGeneratingEInvoice] = useState(false);
 
 
     useEffect(() => {
@@ -202,143 +204,16 @@ export default function OrdersPageClient({ initialOrders, allProducts }: OrdersP
         doc.save(`reporte_pedidos_${new Date().toISOString().split('T')[0]}.pdf`);
     };
 
-    const handleGenerateInvoice = (order: Order) => {
-        if (!storeConfig) return null;
-        const doc = new jsPDF();
-        const pageHeight = doc.internal.pageSize.height;
-        const pageWidth = doc.internal.pageSize.width;
-
-        // Header
-        doc.setFontSize(24);
-        doc.setFont('helvetica', 'bold');
-        doc.text(storeConfig.name, 20, 25);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Comprobante de Venta', 20, 32);
-
-        // Order Info Box
-        doc.setFontSize(10);
-        doc.text(`Pedido ID:`, 140, 25);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`#${order.id.substring(0, 8)}`, 160, 25);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Fecha:`, 140, 32);
-        doc.text(format(new Date(order.date), 'dd/MM/yyyy'), 160, 32);
-
-        // Store and Customer Info
-        doc.setLineWidth(0.2);
-        doc.line(20, 45, pageWidth - 20, 45);
-
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Vendido por:', 20, 52);
-        doc.setFont('helvetica', 'normal');
-        doc.text(storeConfig.name, 20, 58);
-        doc.text(storeConfig.address.street, 20, 63);
-        doc.text(`${storeConfig.address.city}, ${storeConfig.address.postalCode}`, 20, 68);
-
-        doc.setFont('helvetica', 'bold');
-        doc.text('Cliente:', 110, 52);
-        doc.setFont('helvetica', 'normal');
-        doc.text(order.customerName, 110, 58);
-        if(order.shippingAddress) {
-            doc.text(order.shippingAddress.address, 110, 63);
-            doc.text(`${order.shippingAddress.city}, ${order.shippingAddress.postalCode}`, 110, 68);
+    const handleGenerateEInvoice = async (order: Order) => {
+        setIsGeneratingEInvoice(true);
+        const result = await generateEInvoiceAction(order.id, allProducts);
+        if (result.success) {
+            toast({ title: "Factura Electrónica Generada", description: `La factura para el pedido #${order.id.substring(0,8)} ha sido autorizada.` });
+            router.refresh();
+        } else {
+            toast({ title: "Error al generar Factura", description: result.message, variant: "destructive", duration: 10000 });
         }
-        if(order.identification) doc.text(`Identificación: ${order.identification}`, 110, 73);
-
-        doc.line(20, 80, pageWidth - 20, 80);
-
-        // Items Table
-        const tableColumn = ["Producto", "Cantidad", "P. Unitario", "Total"];
-        const tableRows: any[][] = [];
-
-        order.items.forEach(item => {
-            const product = getProductById(item.productId);
-            const row = [
-                { content: product?.name || 'Producto no encontrado', styles: { fontStyle: 'bold' } },
-                item.quantity,
-                `$${item.price.toFixed(2)}`,
-                `$${(item.price * item.quantity).toFixed(2)}`
-            ];
-            tableRows.push(row);
-        });
-
-        autoTable(doc, {
-            startY: 85,
-            head: [tableColumn],
-            body: tableRows,
-            theme: 'striped',
-            headStyles: { fillColor: [30, 30, 30] },
-            styles: { fontSize: 9 },
-            columnStyles: {
-                0: { cellWidth: 80 },
-                1: { halign: 'left' },
-                2: { halign: 'left' },
-                3: { halign: 'left' }
-            }
-        });
-        
-        const finalY = (doc as any).lastAutoTable.finalY || 150;
-
-        // Totals
-        const totalsX = 170;
-        let currentY = finalY + 10;
-        doc.setFontSize(10);
-
-        const addTotalLine = (label: string, value: string, isBold: boolean = false) => {
-            doc.setFont('helvetica', isBold ? 'bold' : 'normal');
-            doc.text(label, totalsX, currentY, { align: 'right' });
-            doc.text(value, pageWidth - 20, currentY, { align: 'right' });
-            currentY += 7;
-        };
-
-        addTotalLine('Subtotal:', `$${order.subtotal.toFixed(2)}`);
-        if (order.discountAmount > 0) {
-            addTotalLine(`Descuento (${order.couponCode || ''}):`, `-$${order.discountAmount.toFixed(2)}`);
-        }
-        if (order.taxAmount && order.taxAmount > 0) {
-            addTotalLine(`IVA (${order.taxRate}%):`, `$${order.taxAmount.toFixed(2)}`);
-        }
-        
-        doc.line(totalsX - 45, currentY - 4, pageWidth - 20, currentY - 4);
-        addTotalLine('Total:', `$${order.total.toFixed(2)}`, true);
-        
-        // Footer
-        const footerY = pageHeight - 20;
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Gracias por su compra.', pageWidth / 2, footerY, { align: 'center' });
-        doc.text(`Método de Pago: ${order.paymentMethod}`, pageWidth / 2, footerY + 4, { align: 'center' });
-        
-        return doc;
-    };
-    
-    const handleExportInvoices = async () => {
-        if (filteredOrders.length === 0) {
-            toast({ title: "No hay pedidos para exportar", description: "Aplica filtros diferentes si es necesario." });
-            return;
-        }
-        setIsExportingInvoices(true);
-        const zip = new JSZip();
-        
-        for (const order of filteredOrders) {
-            const pdfDoc = handleGenerateInvoice(order);
-            if (pdfDoc) {
-                const pdfBlob = pdfDoc.output('blob');
-                zip.file(`comprobante_${order.id.substring(0, 8)}.pdf`, pdfBlob);
-            }
-        }
-        
-        const zipBlob = await zip.generateAsync({ type: 'blob' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(zipBlob);
-        link.download = 'comprobantes_pedidos.zip';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        setIsExportingInvoices(false);
+        setIsGeneratingEInvoice(false);
     };
 
     return (
@@ -356,10 +231,7 @@ export default function OrdersPageClient({ initialOrders, allProducts }: OrdersP
                  <div className="flex items-center gap-2">
                     <Button onClick={handleExportPDF} variant="outline">
                         <FileDown className="mr-2 h-4 w-4" />
-                        Exportar a PDF
-                    </Button>
-                     <Button onClick={handleExportInvoices} variant="outline" disabled={isExportingInvoices}>
-                        {isExportingInvoices ? "Exportando..." : <><FileDown className="mr-2 h-4 w-4" /> Exportar Comprobantes</>}
+                        Exportar Resumen
                     </Button>
                 </div>
             </div>
@@ -449,7 +321,7 @@ export default function OrdersPageClient({ initialOrders, allProducts }: OrdersP
                                     <TableCell>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button size="icon" variant="ghost">
+                                                <Button size="icon" variant="ghost" disabled={isGeneratingEInvoice}>
                                                     <MoreHorizontal className="h-4 w-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
@@ -457,9 +329,9 @@ export default function OrdersPageClient({ initialOrders, allProducts }: OrdersP
                                                 <DropdownMenuItem onClick={() => handleViewDetails(order.id)}>
                                                     Ver Detalles y Actualizar
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleGenerateInvoice(order)?.save(`comprobante_${order.id.substring(0, 8)}.pdf`)}>
-                                                    <FileDown className="mr-2 h-4 w-4"/>
-                                                    Generar Comprobante
+                                                <DropdownMenuItem onClick={() => handleGenerateEInvoice(order)} disabled={!storeConfig?.isEInvoicingEnabled || isGeneratingEInvoice || !!order.eInvoiceAuthorization}>
+                                                    <FileText className="mr-2 h-4 w-4"/>
+                                                    {isGeneratingEInvoice ? "Generando..." : "Generar Factura Electrónica"}
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>

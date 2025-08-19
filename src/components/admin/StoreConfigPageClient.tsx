@@ -12,12 +12,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { StoreConfig } from "@/types";
 import { updateStoreConfigAction, optimizeImage as optimizeImageAction } from "@/lib/actions";
-import { Percent, Store, CreditCard } from "lucide-react";
+import { Percent, Store, CreditCard, FileKey } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import Image from "next/image";
 import { Switch } from "../ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
-import { PaypalIcon } from "../icons/paypal";
 import { Separator } from "../ui/separator";
 
 const currencies = [
@@ -60,6 +59,9 @@ const formSchema = z.object({
           enabled: z.boolean().default(false),
       }).optional(),
   }).optional(),
+  eSignatureFile: z.string().optional(),
+  isEInvoicingEnabled: z.boolean().default(false),
+  nextInvoiceNumber: z.coerce.number().int().min(1, "El número debe ser al menos 1."),
 });
 
 interface StoreConfigPageClientProps {
@@ -76,6 +78,9 @@ export default function StoreConfigPageClient({ initialConfig }: StoreConfigPage
       ...initialConfig,
       logoUrl: initialConfig.logoUrl || '',
       logoUrlDark: initialConfig.logoUrlDark || '',
+      eSignatureFile: initialConfig.eSignatureFile || '',
+      isEInvoicingEnabled: initialConfig.isEInvoicingEnabled || false,
+      nextInvoiceNumber: initialConfig.nextInvoiceNumber || 1,
     },
   });
 
@@ -323,6 +328,65 @@ export default function StoreConfigPageClient({ initialConfig }: StoreConfigPage
                                 </FormItem>
                             )}/>
                         </div>
+                    </CardContent>
+                 </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Configuración de Facturación Electrónica</CardTitle>
+                        <CardDescription>Ajustes para la emisión de facturas electrónicas (SRI Ecuador).</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <FormField control={form.control} name="isEInvoicingEnabled" render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                <div className="space-y-0.5"><FormLabel>Activar Facturación Electrónica</FormLabel></div>
+                                <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                            </FormItem>
+                        )}/>
+                        <FormField
+                            control={form.control}
+                            name="eSignatureFile"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Archivo de Firma Electrónica (.p12)</FormLabel>
+                                <FormControl>
+                                    <Input
+                                    type="file"
+                                    accept=".p12"
+                                    className="h-auto"
+                                    onChange={(e) => {
+                                        if (e.target.files?.[0]) {
+                                        const file = e.target.files[0];
+                                        const reader = new FileReader();
+                                        reader.onload = (event) => {
+                                            if (event.target?.result) {
+                                            const base64String = (event.target.result as string).split(',')[1];
+                                            field.onChange(base64String);
+                                            }
+                                        };
+                                        reader.readAsDataURL(file);
+                                        }
+                                    }}
+                                    />
+                                </FormControl>
+                                {field.value && (
+                                    <div className="flex items-center gap-2 text-sm text-green-600 mt-2">
+                                    <FileKey className="h-4 w-4" />
+                                    <span>Archivo .p12 cargado. Para cambiarlo, sube uno nuevo.</span>
+                                    </div>
+                                )}
+                                <FormDescription>La contraseña se debe configurar en el archivo .env del servidor.</FormDescription>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField control={form.control} name="nextInvoiceNumber" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Próximo Número de Factura</FormLabel>
+                                <FormControl><Input type="number" {...field} /></FormControl>
+                                <FormDescription>Este número se incrementará automáticamente con cada factura.</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}/>
                     </CardContent>
                  </Card>
                  <Card>

@@ -33,19 +33,27 @@ const parseOrder = (row: any): Order => {
     items: row.items,
     trackingHistory: row.trackingHistory || [],
     paymentMethod: row.paymentMethod,
+    eInvoiceStatus: row.eInvoiceStatus,
+    eInvoiceAuthorization: row.eInvoiceAuthorization,
   };
 };
 
 export async function getOrdersFromDb(): Promise<Order[]> {
-    const result = await query<any>('SELECT id, "userId", "customerName", email, phone, identification, "shippingAddress", date, subtotal, "discountAmount", "taxAmount", "taxRate", "couponCode", total, status, items, "trackingHistory", "paymentMethod" FROM orders ORDER BY date DESC');
+    const result = await query<any>('SELECT * FROM orders ORDER BY date DESC');
     return result.map(parseOrder);
 }
+export async function getOrderByIdFromDb(id: string): Promise<Order | null> {
+    const result = await query<any>('SELECT * FROM orders WHERE id = $1', [id]);
+    if (result.length === 0) return null;
+    return parseOrder(result[0]);
+}
+
 
 export async function updateOrderStatusInDb(orderId: string, newStatus: OrderStatus): Promise<Order | null> {
     const client = await getClient();
     try {
         await client.query('BEGIN');
-        const orderRes = await client.query('SELECT id, "userId", "customerName", email, phone, identification, "shippingAddress", date, subtotal, "discountAmount", "taxAmount", "taxRate", "couponCode", total, status, items, "trackingHistory", "paymentMethod" FROM orders WHERE id = $1', [orderId]);
+        const orderRes = await client.query('SELECT * FROM orders WHERE id = $1', [orderId]);
         if (orderRes.rows.length === 0) {
             throw new Error('Pedido no encontrado');
         }

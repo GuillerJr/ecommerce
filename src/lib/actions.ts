@@ -42,3 +42,5 @@ export * from './actions/navigation';
 export * from './actions/contact';
 // Exportaciones de acciones de PayPal
 export * from './actions/paypal';
+// Exportaciones de acciones de facturación electrónica
+export * from './actions/einvoice';

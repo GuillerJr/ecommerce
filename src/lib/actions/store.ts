@@ -38,6 +38,11 @@ export async function updateStoreConfigAction(config: Omit<StoreConfig, 'id'>, u
             }
         }
         
+        // Don't log the full signature file content
+        if (changes.eSignatureFile) {
+            changes.eSignatureFile = { old: '******', new: '******' };
+        }
+
         if (Object.keys(changes).length > 0) {
             await logActivity({ userId, userName: user.name, action: 'update', entityType: 'StoreConfig', entityId: '1', details: changes });
         }
