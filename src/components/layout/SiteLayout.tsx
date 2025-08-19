@@ -14,6 +14,7 @@ import type { ReactNode } from 'react';
 import type { StoreConfig } from '@/types';
 import Breadcrumbs from './Breadcrumbs';
 import { usePathname } from 'next/navigation';
+import { Toaster } from '../ui/toaster';
 
 /**
  * Componente que gestiona el layout del sitio.
@@ -26,18 +27,20 @@ export default function SiteLayout({ children, storeConfig }: { children: ReactN
   const pathname = usePathname();
   const isAdminPage = pathname.startsWith('/admin');
 
-  if (isAdminPage) {
-    return <>{children}</>;
+    if (isAdminPage) {
+      return <>{children}</>;
+    }
+
+    return (
+      <div className="relative flex min-h-screen flex-col">
+        <Header storeConfig={storeConfig} />
+        <main className="flex-1">
+          <Breadcrumbs />
+          {children}
+        </main>
+        <Footer storeConfig={storeConfig} />
+        <Toaster />
+      </div>
+    );
   }
   
-  return (
-    <div className="relative flex min-h-screen flex-col">
-      <Header storeConfig={storeConfig} />
-      <main className="flex-1">
-        <Breadcrumbs />
-        {children}
-      </main>
-      <Footer storeConfig={storeConfig} />
-    </div>
-  );
-}

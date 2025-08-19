@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import type { Order, Product, Discount, User, Giveaway } from '@/types';
@@ -89,7 +90,7 @@ const getEmailHtml = async (title: string, content: string, withButton?: {text: 
 };
 
 
-async function sendEmail(to: string | string[], subject: string, html: string, attachments?: nodemailer.SendMailOptions['attachments']) {
+export async function sendEmail(to: string | string[], subject: string, html: string, attachments?: nodemailer.SendMailOptions['attachments']) {
     if (!transporter) {
         console.error("==========================================================");
         console.error("📧 SMTP transporter not configured. Email will not be sent. 📧");

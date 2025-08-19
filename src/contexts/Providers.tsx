@@ -1,4 +1,3 @@
-
 /**
  * @fileoverview Componente del lado del cliente que agrupa todos los proveedores de contexto.
  * Esta separación es necesaria para evitar conflictos de renderizado entre
@@ -33,7 +32,6 @@ export default function Providers({ children }: ProvidersProps) {
           <ComparisonProvider>
             <CartProvider>
               {children}
-              <Toaster />
             </CartProvider>
           </ComparisonProvider>
         </FavoritesProvider>
