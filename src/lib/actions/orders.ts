@@ -66,22 +66,26 @@ export async function createOrderAction(orderData: { userId?: string, customerNa
     try {
         const order = await createOrderInDb(orderData, items, taxRate, couponCode);
         
+        let eInvoicePdfBuffer: Buffer | undefined;
+
         // --- E-Invoice Generation ---
         const storeConfig = await getStoreConfigFromDb();
         if (storeConfig.isEInvoicingEnabled) {
             try {
                 const allProducts = await getProductsFromDb();
-                await generateEInvoiceAction(order.id, allProducts);
+                const eInvoiceResult = await generateEInvoiceAction(order.id, allProducts);
+                if (eInvoiceResult.success && eInvoiceResult.pdfBuffer) {
+                    eInvoicePdfBuffer = eInvoiceResult.pdfBuffer;
+                }
             } catch (eInvoiceError) {
                 console.error(`Failed to generate e-invoice for order ${order.id}:`, eInvoiceError);
-                // The order is created, but the e-invoice failed. The status is handled inside generateEInvoiceAction.
             }
         }
         // --- End E-Invoice Generation ---
 
         // Only sends confirmation email if it's not a placeholder POS email
         if (!order.email.endsWith('@hacktrick.store')) {
-            await sendOrderConfirmationEmail(order);
+            await sendOrderConfirmationEmail(order, eInvoicePdfBuffer);
         }
 
         revalidatePath('/pedidos');

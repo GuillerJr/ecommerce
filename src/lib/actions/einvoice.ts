@@ -33,7 +33,7 @@ const getSriUrls = (environment: '1' | '2') => {
 };
 
 
-export async function generateEInvoiceAction(orderId: string, allProducts: Product[]) {
+export async function generateEInvoiceAction(orderId: string, allProducts: Product[]): Promise<{ success: boolean; message?: string; pdfBuffer?: Buffer; }> {
   try {
     // 1. Get data
     const order = await getOrderByIdFromDb(orderId);
@@ -157,16 +157,11 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
     await query('UPDATE orders SET "eInvoiceStatus" = $1, "eInvoiceAuthorization" = $2 WHERE id = $3', ['AUTHORIZED', authorizationNumber, orderId]);
     await updateStoreConfigInDb({ ...storeConfig, nextInvoiceNumber: storeConfig.nextInvoiceNumber + 1 });
 
-    // 8. Generate and send RIDE
+    // 8. Generate RIDE and return buffer
     const pdfBuffer = await generateRidePdf(order, storeConfig, authorizationNumber, allProducts);
-    await sendEmail(order.email, `Factura Electrónica ${storeConfig.name}`, 'Adjuntamos tu factura electrónica.', [{
-        filename: `factura-${order.id.substring(0,8)}.pdf`,
-        content: pdfBuffer,
-        contentType: 'application/pdf',
-    }]);
 
     revalidatePath('/admin/pedidos');
-    return { success: true };
+    return { success: true, pdfBuffer };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Ocurrió un error desconocido.';
     console.error("E-Invoice Error:", message);
