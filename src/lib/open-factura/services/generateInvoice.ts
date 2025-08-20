@@ -11,7 +11,7 @@ import { generateAccessKey } from "../utils/utils";
  * @param {Invoice} invoice - El objeto de factura completo.
  * @returns {string} Una cadena de texto con el contenido del archivo XML de la factura.
  */
-export function generateInvoiceXml(invoice: Invoice) {
+function generateInvoiceXml(invoice: Invoice) {
   const document = create({ encoding: 'UTF-8' }, invoice);
   const xml = document.end({ prettyPrint: true });
   return xml;
@@ -21,7 +21,7 @@ export function generateInvoiceXml(invoice: Invoice) {
  * Genera el objeto de factura completo a partir de los datos de entrada.
  * Esta función también crea la clave de acceso de 49 dígitos requerida por el SRI.
  * @param {InvoiceInput} invoiceData - Los datos de entrada para la factura.
- * @returns {{ invoice: Invoice, accessKey: string }} Un objeto que contiene la factura completa y su clave de acceso.
+ * @returns {{ invoice: Invoice, accessKey: string, xml: string }} Un objeto que contiene la factura completa, su clave de acceso y el XML.
  */
 export function generateInvoice(invoiceData: { factura: InvoiceInput }) {
   const accessKey = generateAccessKey({
@@ -35,19 +35,19 @@ export function generateInvoice(invoiceData: { factura: InvoiceInput }) {
   });
 
   const infoTributaria: any = {
-    ambiente: invoiceData.factura.infoTributaria.ambiente,
-    tipoEmision: invoiceData.factura.infoTributaria.tipoEmision,
-    razonSocial: invoiceData.factura.infoTributaria.razonSocial,
-    ruc: invoiceData.factura.infoTributaria.ruc,
-    claveAcceso: accessKey,
-    codDoc: invoiceData.factura.infoTributaria.codDoc,
-    estab: invoiceData.factura.infoTributaria.estab,
-    ptoEmi: invoiceData.factura.infoTributaria.ptoEmi,
-    secuencial: invoiceData.factura.infoTributaria.secuencial,
-    dirMatriz: invoiceData.factura.infoTributaria.dirMatriz,
+      ambiente: invoiceData.factura.infoTributaria.ambiente,
+      tipoEmision: invoiceData.factura.infoTributaria.tipoEmision,
+      razonSocial: invoiceData.factura.infoTributaria.razonSocial,
+      ruc: invoiceData.factura.infoTributaria.ruc,
+      claveAcceso: accessKey,
+      codDoc: invoiceData.factura.infoTributaria.codDoc,
+      estab: invoiceData.factura.infoTributaria.estab,
+      ptoEmi: invoiceData.factura.infoTributaria.ptoEmi,
+      secuencial: invoiceData.factura.infoTributaria.secuencial,
+      dirMatriz: invoiceData.factura.infoTributaria.dirMatriz,
   };
 
-  if (invoiceData.factura.infoTributaria.nombreComercial) {
+  if (invoiceData.factura.infoTributaria.nombreComercial && invoiceData.factura.infoTributaria.nombreComercial !== invoiceData.factura.infoTributaria.razonSocial) {
       infoTributaria.nombreComercial = invoiceData.factura.infoTributaria.nombreComercial;
   }
 
@@ -78,5 +78,7 @@ export function generateInvoice(invoiceData: { factura: InvoiceInput }) {
     },
   };
 
-  return { invoice, accessKey };
+  const xml = generateInvoiceXml(invoice);
+
+  return { invoice, accessKey, xml };
 }
