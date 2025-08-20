@@ -6,17 +6,15 @@ import type { Order, Product, StoreConfig } from '@/types';
 import { getOrderByIdFromDb } from '../data/orders';
 import { getStoreConfigFromDb, updateStoreConfigInDb } from '../data/store';
 import {
+  generateInvoice,
+  signXml,
   documentReception,
   documentAuthorization,
 } from '../open-factura';
-import { generateAccessKey } from '../open-factura/utils/utils';
 import { generateRidePdf } from '../einvoice/ride';
 import { sendOrderConfirmationEmail } from '../email.server';
 import { query } from '../db.server';
 import { revalidatePath } from 'next/cache';
-import { signXml } from '../open-factura/services/signing';
-import { create } from 'xmlbuilder2';
-
 
 const getSriUrls = (environment: '1' | '2') => {
   if (environment === '2') {
@@ -48,41 +46,28 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
     const sriUrls = getSriUrls(storeConfig.eInvoicingEnvironment);
     const taxRateCode = storeConfig.taxRate === 12 ? '2' : (storeConfig.taxRate === 15 ? '4' : '0');
     const secuencial = String(storeConfig.nextInvoiceNumber).padStart(9, '0');
-
-    // Generate Access Key
-    const accessKey = generateAccessKey({
-      date: new Date(),
-      codDoc: '01',
-      ruc: storeConfig.address.ruc,
-      environment: storeConfig.eInvoicingEnvironment,
-      establishment: '001',
-      emissionPoint: '001',
-      sequential: secuencial,
-    });
-
-    let infoTributaria: any = {
+    
+    // Preparar infoTributaria
+    const infoTributaria: any = {
       ambiente: storeConfig.eInvoicingEnvironment,
-      tipoEmision: '1',
+      tipoEmision: '1' as const,
       razonSocial: storeConfig.legalName,
       ruc: storeConfig.address.ruc,
-      claveAcceso: accessKey,
-      codDoc: '01',
+      codDoc: '01' as const,
       estab: '001',
       ptoEmi: '001',
       secuencial: secuencial,
       dirMatriz: storeConfig.address.street,
     };
-
+    
     const invoiceData = {
         factura: {
-            "@id": "comprobante",
-            "@version": "1.1.0",
             infoTributaria,
             infoFactura: {
                 fechaEmision: new Date(order.date).toLocaleDateString('es-EC', { day: '2-digit', month: '2-digit', year: 'numeric' }),
                 dirEstablecimiento: storeConfig.address.street,
-                obligadoContabilidad: 'SI',
-                tipoIdentificacionComprador: '05', // Cédula por defecto
+                obligadoContabilidad: 'SI' as const,
+                tipoIdentificacionComprador: '05' as const, // Cédula por defecto
                 razonSocialComprador: order.customerName,
                 identificacionComprador: order.identification || '9999999999',
                 totalSinImpuestos: order.subtotal.toFixed(2),
@@ -90,7 +75,7 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
                 totalConImpuestos: {
                     totalImpuesto: [
                     {
-                        codigo: '2',
+                        codigo: '2' as const,
                         codigoPorcentaje: taxRateCode,
                         baseImponible: (order.subtotal - order.discountAmount).toFixed(2),
                         valor: order.taxAmount?.toFixed(2) || '0.00',
@@ -124,7 +109,7 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
                         impuestos: {
                             impuesto: [
                                 {
-                                    codigo: '2',
+                                    codigo: '2' as const,
                                     codigoPorcentaje: taxRateCode,
                                     tarifa: String(storeConfig.taxRate || 0),
                                     baseImponible: itemTotal.toFixed(2),
@@ -145,15 +130,15 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
             }
         }
     };
-
-    const xml = create(invoiceData).end({ prettyPrint: true });
-
+    
+    const { xml, accessKey } = generateInvoice(invoiceData as any);
+    
     const signatureBuffer = Buffer.from(storeConfig.eSignatureFile, 'base64');
-    const signedXml = await signXml(signatureBuffer, process.env.E_SIGNATURE_PASSWORD!, xml);
+    const signedXml = await signXml(signatureBuffer, process.env.E_SIGNATURE_PASSWORD, xml);
 
     const receptionResult = await documentReception(signedXml, sriUrls.reception);
     const receptionState = receptionResult?.RespuestaRecepcionComprobante?.estado;
-
+    
     if (receptionState !== 'RECIBIDA') {
         const errorMessage = receptionResult?.RespuestaRecepcionComprobante?.comprobantes?.comprobante?.mensajes?.mensaje?.informacionAdicional || 'Error en la recepción.';
         console.error("SRI Reception Error Details:", JSON.stringify(receptionResult, null, 2));
@@ -161,11 +146,11 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
     }
 
     await new Promise(resolve => setTimeout(resolve, 3000));
-
+    
     try {
         const authorizationResult = await documentAuthorization(accessKey, sriUrls.authorization);
         const authorization = authorizationResult?.autorizaciones?.autorizacion;
-
+        
         if (!authorization || authorization.estado !== 'AUTORIZADO') {
             console.error("SRI Authorization Error Details:", JSON.stringify(authorizationResult, null, 2));
             const errorMessage = authorization?.mensajes?.mensaje?.informacionAdicional || 'No autorizado.';
@@ -179,7 +164,7 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
         await updateStoreConfigInDb({ ...storeConfig, nextInvoiceNumber: storeConfig.nextInvoiceNumber + 1 });
 
         const pdfBuffer = await generateRidePdf(order, storeConfig, authorizationNumber, allProducts);
-
+        
         revalidatePath('/admin/pedidos');
         return { success: true, pdfBuffer };
 
@@ -188,7 +173,7 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
         console.error("Error during authorization step:", message);
         throw new Error(message);
     }
-
+    
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Ocurrió un error desconocido.';
     console.error("E-Invoice Error:", message);
@@ -196,5 +181,3 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
     return { success: false, message };
   }
 }
-
-

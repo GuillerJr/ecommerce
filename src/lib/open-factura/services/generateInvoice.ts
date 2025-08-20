@@ -47,16 +47,15 @@ export function generateInvoice(invoiceData: { factura: InvoiceInput }) {
       dirMatriz: invoiceData.factura.infoTributaria.dirMatriz,
   };
 
-  if (invoiceData.factura.infoTributaria.nombreComercial && invoiceData.factura.infoTributaria.nombreComercial !== invoiceData.factura.infoTributaria.razonSocial) {
-      infoTributaria.nombreComercial = invoiceData.factura.infoTributaria.nombreComercial;
+  if (invoiceData.factura.infoTributaria.contribuyenteRimpe) {
+      infoTributaria.contribuyenteRimpe = invoiceData.factura.infoTributaria.contribuyenteRimpe;
   }
 
   // Re-order for SRI compliance, placing claveAcceso after RUC
-  const orderedInfoTributaria = {
+  const orderedInfoTributaria: any = {
       ambiente: infoTributaria.ambiente,
       tipoEmision: infoTributaria.tipoEmision,
       razonSocial: infoTributaria.razonSocial,
-      ...(infoTributaria.nombreComercial && { nombreComercial: infoTributaria.nombreComercial }),
       ruc: infoTributaria.ruc,
       claveAcceso: infoTributaria.claveAcceso,
       codDoc: infoTributaria.codDoc,
@@ -65,6 +64,10 @@ export function generateInvoice(invoiceData: { factura: InvoiceInput }) {
       secuencial: infoTributaria.secuencial,
       dirMatriz: infoTributaria.dirMatriz,
   };
+
+  if (infoTributaria.contribuyenteRimpe) {
+      orderedInfoTributaria.contribuyenteRimpe = infoTributaria.contribuyenteRimpe;
+  }
 
 
   const invoice: Invoice = {

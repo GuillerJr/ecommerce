@@ -22,7 +22,7 @@ export type TaxInfo = {
   ambiente: "1" | "2";
   tipoEmision: "1";
   razonSocial: string;
-  nombreComercial: string;
+  nombreComercial?: string;
   ruc: string;
   claveAcceso: string;
   codDoc: "01" | "03" | "04" | "05" | "06" | "07";

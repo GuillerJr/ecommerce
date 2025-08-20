@@ -26,12 +26,13 @@ export async function getStoreConfigFromDb(): Promise<StoreConfig> {
         isEInvoicingEnabled: row.isEInvoicingEnabled || false,
         nextInvoiceNumber: row.nextInvoiceNumber || 1,
         eInvoicingEnvironment: row.eInvoicingEnvironment || '1',
+        contribuyenteRimpe: row.contribuyenteRimpe,
      };
 }
 
 export async function updateStoreConfigInDb(config: Omit<StoreConfig, 'id'>): Promise<StoreConfig> {
     // We don't save the clientId to the DB, so we remove it before updating.
-    const { paymentGateways, eSignatureFile, isEInvoicingEnabled, nextInvoiceNumber, eInvoicingEnvironment, ...restOfConfig } = config;
+    const { paymentGateways, eSignatureFile, isEInvoicingEnabled, nextInvoiceNumber, eInvoicingEnvironment, contribuyenteRimpe, ...restOfConfig } = config;
     if (paymentGateways?.paypal) {
         delete paymentGateways.paypal.clientId;
     }
@@ -43,14 +44,16 @@ export async function updateStoreConfigInDb(config: Omit<StoreConfig, 'id'>): Pr
             name = $1, description = $2, "logoUrl" = $3, "baseUrl" = $4, "contactEmail" = $5,
             "contactPhone" = $6, address = $7, currency = $8, socials = $9, "taxRate" = $10,
             "paymentGateways" = $11, "logoUrlDark" = $12, "eSignatureFile" = $13,
-            "isEInvoicingEnabled" = $14, "nextInvoiceNumber" = $15, "eInvoicingEnvironment" = $16, ruc = $17, "legalName" = $18
+            "isEInvoicingEnabled" = $14, "nextInvoiceNumber" = $15, "eInvoicingEnvironment" = $16, ruc = $17, "legalName" = $18,
+            "contribuyenteRimpe" = $19
         WHERE id = 1
         RETURNING *`;
     const values = [
         name, description, logoUrl, baseUrl, contactEmail, contactPhone,
         { street: address.street, city: address.city, postalCode: address.postalCode, country: address.country },
         currency, socials, taxRate, paymentGateways, logoUrlDark, eSignatureFile,
-        isEInvoicingEnabled, nextInvoiceNumber, eInvoicingEnvironment, address.ruc, legalName
+        isEInvoicingEnabled, nextInvoiceNumber, eInvoicingEnvironment, address.ruc, legalName,
+        contribuyenteRimpe
     ];
     const result = await query<any>(queryText, values);
     const row = result[0];
