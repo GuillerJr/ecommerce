@@ -26,17 +26,20 @@ export async function documentReception(
      try {
         createClient(receptionUrl, (err, client: Client) => {
           if (err) {
+            console.error("SOAP Client Creation Error:", err);
             return reject(new Error('Error al crear el cliente SOAP: ' + (err.message || 'Error desconocido')));
           }
           // Se llama al método 'validarComprobante' del servicio web.
           client.validarComprobante(params, (err: any, result: unknown) => {
             if (err) {
-              return reject(new Error('Error en la llamada a validarComprobante: ' + (err.message || 'Error desconocido')));
+              console.error("SOAP Call Error (validarComprobante):", err.body || err.message);
+              return reject(new Error('Error en la llamada a validarComprobante: ' + (err.body || err.message || 'Error desconocido')));
             }
             resolve(result);
           });
         });
      } catch(clientError) {
+        console.error("SOAP Client Exception:", clientError);
         reject(new Error('Excepción al crear el cliente SOAP.'));
      }
   });

@@ -12,7 +12,7 @@ import { generateAccessKey } from "../utils/utils";
  * @returns {string} Una cadena de texto con el contenido del archivo XML de la factura.
  */
 export function generateInvoiceXml(invoice: Invoice) {
-  const document = create(invoice);
+  const document = create({ encoding: 'UTF-8' }, invoice);
   const xml = document.end({ prettyPrint: true });
   return xml;
 }
@@ -38,13 +38,12 @@ export function generateInvoice(invoiceData: InvoiceInput) {
   // Construye el objeto de factura final, añadiendo la clave de acceso a la información tributaria.
   const invoice: Invoice = {
     factura: {
-      "@xmlns:ds": "http://www.w3.org/2000/09/xmldsig#",
-      "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
       "@id": "comprobante",
-      "@version": "1.1.0", // Versión actualizada según especificación
+      "@version": "1.1.0",
       infoTributaria: { ...invoiceData.infoTributaria, claveAcceso: accessKey },
       infoFactura: invoiceData.infoFactura,
       detalles: invoiceData.detalles,
+      ...(invoiceData.infoAdicional && { infoAdicional: invoiceData.infoAdicional }),
     },
   };
 

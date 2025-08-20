@@ -20,7 +20,7 @@
  */
 export type TaxInfo = {
   ambiente: "1" | "2";
-  tipoEmision: string;
+  tipoEmision: "1";
   razonSocial: string;
   nombreComercial: string;
   ruc: string;

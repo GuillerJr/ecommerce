@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import type { Order, Product, StoreConfig } from '@/types';
@@ -50,6 +49,27 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
     // 2. Prepare invoice data for open-factura
     const taxRateCode = storeConfig.taxRate === 12 ? '2' : (storeConfig.taxRate === 15 ? '4' : '0');
 
+    const preInvoiceData = {
+        infoTributaria: {
+            ambiente: storeConfig.eInvoicingEnvironment,
+            tipoEmision: '1' as const,
+            razonSocial: storeConfig.name,
+            nombreComercial: storeConfig.name,
+            ruc: storeConfig.address.ruc,
+            codDoc: '01' as const,
+            estab: '001',
+            ptoEmi: '001',
+            secuencial: String(storeConfig.nextInvoiceNumber).padStart(9, '0'),
+            dirMatriz: storeConfig.address.street,
+        },
+        infoFactura: {},
+        detalles: {}
+    };
+
+    // Generate access key
+    const { accessKey } = generateInvoice(preInvoiceData as any);
+
+    // The order of properties IS CRITICAL for XML generation.
     const invoiceData = {
       infoTributaria: {
         ambiente: storeConfig.eInvoicingEnvironment,
@@ -57,6 +77,7 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
         razonSocial: storeConfig.name,
         nombreComercial: storeConfig.name,
         ruc: storeConfig.address.ruc,
+        claveAcceso: accessKey,
         codDoc: '01' as const,
         estab: '001',
         ptoEmi: '001',
@@ -64,23 +85,21 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
         dirMatriz: storeConfig.address.street,
       },
       infoFactura: {
-        fechaEmision: new Date(order.date).toLocaleDateString('es-EC', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '/'),
+        fechaEmision: new Date(order.date).toLocaleDateString('es-EC', { day: '2-digit', month: '2-digit', year: 'numeric' }),
         dirEstablecimiento: storeConfig.address.street,
         obligadoContabilidad: 'SI' as const,
-        tipoIdentificacionComprador: '05' as const, // Cédula
+        tipoIdentificacionComprador: '05' as const,
         razonSocialComprador: order.customerName,
         identificacionComprador: order.identification || '9999999999',
-        direccionComprador: order.shippingAddress?.address || 'N/A',
         totalSinImpuestos: order.subtotal.toFixed(2),
         totalDescuento: order.discountAmount.toFixed(2),
         totalConImpuestos: {
           totalImpuesto: [
             {
               codigo: '2' as const,
-              codigoPorcentaje: taxRateCode as '0' | '2' | '3' | '4' | '6' | '7' | '8',
+              codigoPorcentaje: taxRateCode as '0' | '2' | '3' | '4' | '5' | '6' | '7' | '8',
               baseImponible: (order.subtotal - order.discountAmount).toFixed(2),
               valor: order.taxAmount?.toFixed(2) || '0.00',
-              tarifa: String(storeConfig.taxRate || 0)
             },
           ],
         },
@@ -90,10 +109,8 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
         pagos: {
           pago: [
             {
-              formaPago: '01', // SIN UTILIZACION DEL SISTEMA FINANCIERO
+              formaPago: '20',
               total: order.total.toFixed(2),
-              plazo: '0',
-              unidadTiempo: 'dias'
             },
           ],
         },
@@ -105,10 +122,9 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
           const taxValue = (itemTotal * (storeConfig.taxRate || 0) / 100).toFixed(2);
           return {
             codigoPrincipal: item.productId.substring(0, 25),
-            codigoAuxiliar: item.productId.substring(0, 25),
             descripcion: product?.name || 'Producto',
             cantidad: item.quantity.toString(),
-            precioUnitario: item.price.toFixed(6), // SRI requires 6 decimal places for unit price
+            precioUnitario: item.price.toFixed(2),
             descuento: '0.00',
             precioTotalSinImpuesto: itemTotal.toFixed(2),
             impuestos: {
@@ -125,11 +141,20 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
           };
         }),
       },
+       infoAdicional: {
+            campoAdicional: [
+                {
+                    "@nombre": "email",
+                    "#": order.email
+                }
+            ]
+        }
     };
 
+
     // 3. Generate XML
-    const { invoice, accessKey } = generateInvoice(invoiceData);
-    const invoiceXml = generateInvoiceXml(invoice);
+    const { invoice: finalInvoice } = generateInvoice(invoiceData as any);
+    const invoiceXml = generateInvoiceXml(finalInvoice);
 
     // 4. Sign XML
     const signatureBuffer = Buffer.from(storeConfig.eSignatureFile, 'base64');
@@ -137,9 +162,12 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
 
     // 5. Send to SRI for reception
     const receptionResult = await documentReception(signedXml, sriUrls.reception);
-    if (receptionResult?.estado !== 'RECIBIDA') {
+    const receptionState = receptionResult?.RespuestaRecepcionComprobante?.estado;
+
+    if (receptionState !== 'RECIBIDA') {
         console.error("SRI Reception Error Details:", JSON.stringify(receptionResult, null, 2));
-        throw new Error(`SRI: ${receptionResult?.comprobantes?.comprobante?.mensajes?.mensaje?.mensaje || 'Error en la recepción.'}`);
+        const errorMessage = receptionResult?.RespuestaRecepcionComprobante?.comprobantes?.comprobante?.mensajes?.mensaje?.mensaje || 'Error en la recepción.';
+        throw new Error(`SRI: ${errorMessage}`);
     }
 
     // 6. Authorize with SRI

@@ -108,12 +108,10 @@ export async function signXml(
 ) {
   const arrayBuffer = p12Data;
   let xml = xmlData;
+
   // Normaliza el XML para el proceso de firma.
-  xml = xml.replace(/\s+/g, " ");
   xml = xml.trim();
-  xml = xml.replace(/(?<=\>)(\r?\n)|(\r?\n)(?=\<\/)/g, "");
-  xml = xml.trim();
-  xml = xml.replace(/(?<=\>)(\s*)/g, "");
+  xml = xml.replace('<?xml version="1.0" encoding="UTF-8"?>', "").trim();
 
   // Decodifica el archivo P12.
   const arrayUint8 = new Uint8Array(arrayBuffer);
@@ -201,12 +199,8 @@ export async function signXml(
   const exponent = hexToBase64(key.e.data[0].toString(16));
   const modulus = bigIntToBase64(key.n);
 
-  xml = xml.replace(/\t|\r/g, "");
 
-  const sha1_xml = sha1Base64(
-    xml.replace('<?xml version="1.0" encoding="UTF-8"?>', ""),
-    "utf8"
-  );
+  const sha1_xml = sha1Base64(xml, "utf8");
 
   // Construcción de la firma XAdES-BES.
   const nameSpaces =
@@ -343,7 +337,7 @@ export async function signXml(
     '" URI="#comprobante">';
   signedInfo += "\n<ds:Transforms>";
   signedInfo +=
-    '\n<ds:Transform Algorithm="http://www.w3.org/2000/09/xmlndsig#enveloped-signature">';
+    '\n<ds:Transform Algorithm="http://www.w3.org/2000/09/xml-dsub#enveloped-signature">';
   signedInfo += "</ds:Transform>";
   signedInfo += "\n</ds:Transforms>";
   signedInfo +=
@@ -393,5 +387,5 @@ export async function signXml(
   xadesBes += "</ds:Signature>";
 
   // Inserta la firma XAdES-BES en el XML original.
-  return xml.replace(/(<[^<]+)$/, xadesBes + "$1");
+  return '<?xml version="1.0" encoding="UTF-8"?>\n' + xml.replace(/(<[^<]+)$/, xadesBes + "$1");
 }
