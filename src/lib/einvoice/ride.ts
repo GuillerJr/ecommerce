@@ -34,7 +34,7 @@ export async function generateRidePdf(order: Order, storeConfig: StoreConfig, au
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.text(authorizationNumber, 135, 40, { maxWidth: 60 });
-
+    
 
     // Customer Info
     doc.setFontSize(10);
@@ -47,7 +47,7 @@ export async function generateRidePdf(order: Order, storeConfig: StoreConfig, au
     doc.text('Identificación:', 20, 60);
     doc.setFont('helvetica', 'normal');
     doc.text(order.identification || '9999999999', 65, 60);
-
+    
     doc.setFont('helvetica', 'bold');
     doc.text('Fecha Emisión:', 20, 65);
     doc.setFont('helvetica', 'normal');
@@ -57,7 +57,7 @@ export async function generateRidePdf(order: Order, storeConfig: StoreConfig, au
     doc.text('Dirección:', 20, 70);
     doc.setFont('helvetica', 'normal');
     doc.text(order.shippingAddress?.address || 'N/A', 65, 70);
-
+    
 
     // Items Table
     const tableColumn = ["Cod. Principal", "Descripción", "Cant.", "P. Unitario", "Total"];
@@ -83,7 +83,7 @@ export async function generateRidePdf(order: Order, storeConfig: StoreConfig, au
         headStyles: { fillColor: [22, 22, 22], fontSize: 8 },
         styles: { fontSize: 8 },
     });
-
+    
     const finalY = (doc as any).lastAutoTable.finalY || 150;
 
     // Totals Section

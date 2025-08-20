@@ -23,20 +23,22 @@ export async function documentReception(
 
   // Se crea una promesa para manejar la llamada asíncrona al servicio SOAP.
   const receptionRequest = new Promise((resolve, reject) => {
-    createClient(receptionUrl, (err, client: Client) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      // Se llama al método 'validarComprobante' del servicio web.
-      client.validarComprobante(params, (err: any, result: unknown) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        resolve(result);
-      });
-    });
+     try {
+        createClient(receptionUrl, (err, client: Client) => {
+          if (err) {
+            return reject(new Error('Error al crear el cliente SOAP: ' + (err.message || 'Error desconocido')));
+          }
+          // Se llama al método 'validarComprobante' del servicio web.
+          client.validarComprobante(params, (err: any, result: unknown) => {
+            if (err) {
+              return reject(new Error('Error en la llamada a validarComprobante: ' + (err.message || 'Error desconocido')));
+            }
+            resolve(result);
+          });
+        });
+     } catch(clientError) {
+        reject(new Error('Excepción al crear el cliente SOAP.'));
+     }
   });
 
   receptionResult = await receptionRequest;

@@ -269,7 +269,7 @@ export default function StoreConfigPageClient({ initialConfig }: StoreConfigPage
                             )}/>
                          </div>
                           <FormField control={form.control} name="address.ruc" render={({ field }) => (
-                            <FormItem><FormLabel>RUC</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>RUC</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>
                           )}/>
                          <FormField control={form.control} name="address.street" render={({ field }) => (
                              <FormItem><FormLabel>Calle y Número (Matriz)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>

@@ -17,7 +17,7 @@ export async function getStoreConfigFromDb(): Promise<StoreConfig> {
 
      return {
         ...row,
-        address: { ...row.address, ruc: row.ruc },
+        address: { ...(row.address || {}), ruc: row.ruc }, // Correctly assign ruc to address object
         logoUrl: row.logoUrl || '',
         logoUrlDark: row.logoUrlDark || '',
         paymentGateways,
@@ -59,3 +59,4 @@ export async function updateStoreConfigInDb(config: Omit<StoreConfig, 'id'>): Pr
         logoUrlDark: row.logoUrlDark || '',
      };
 }
+

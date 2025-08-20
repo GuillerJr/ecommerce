@@ -178,9 +178,14 @@ export async function signXml(
 
   // Extrae la clave privada y la información del certificado.
   const key = (pkcs8 as any).key ?? (pkcs8 as any).asn1;
-  const certificateX509_pem = forge.pki.certificateToPem(certificate!);
+  const certificateX509_pem = forge.pki.certificateToAsn1(certificate!);
+  const certificateX509_der = forge.asn1
+    .toDer(certificateX509_pem)
+    .getBytes();
+  const hash_certificateX509_der = sha1Base64(certificateX509_der, "binary");
 
-  let certificateX509 = certificateX509_pem;
+  let certificateX509 = forge.pki.certificateToPem(certificate!);
+
   certificateX509 = certificateX509.substr(certificateX509.indexOf("\n"));
   certificateX509 = certificateX509.substr(
     0,
@@ -191,9 +196,6 @@ export async function signXml(
     .replace(/\r?\n|\r/g, "")
     .replace(/([^\0]{76})/g, "$1\n");
 
-  const certificateX509_asn1 = forge.pki.certificateToAsn1(certificate!);
-  const certificateX509_der = forge.asn1.toDer(certificateX509_asn1).getBytes();
-  const hash_certificateX509_der = sha1Base64(certificateX509_der, "utf8");
   const certificateX509_serialNumber = parseInt(certificate!.serialNumber, 16);
 
   const exponent = hexToBase64(key.e.data[0].toString(16));

@@ -13,7 +13,7 @@ import {
   documentAuthorization,
 } from '../open-factura';
 import { generateRidePdf } from '../einvoice/ride';
-import { sendEmail } from '../email.server';
+import { sendOrderConfirmationEmail } from '../email.server';
 import { query } from '../db.server';
 import { revalidatePath } from 'next/cache';
 
@@ -138,6 +138,7 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
     // 5. Send to SRI for reception
     const receptionResult = await documentReception(signedXml, sriUrls.reception);
     if (receptionResult?.estado !== 'RECIBIDA') {
+        console.error("SRI Reception Error Details:", JSON.stringify(receptionResult, null, 2));
         throw new Error(`SRI: ${receptionResult?.comprobantes?.comprobante?.mensajes?.mensaje?.mensaje || 'Error en la recepción.'}`);
     }
 
@@ -147,6 +148,7 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
     const authorization = authorizationResult?.autorizaciones?.autorizacion;
 
     if (authorization?.estado !== 'AUTORIZADO') {
+        console.error("SRI Authorization Error Details:", JSON.stringify(authorization, null, 2));
         await query('UPDATE orders SET "eInvoiceStatus" = $1, "eInvoiceAuthorization" = $2 WHERE id = $3', ['REJECTED', JSON.stringify(authorization?.mensajes), orderId]);
         throw new Error(`SRI: ${authorization?.mensajes?.mensaje?.mensaje || 'No autorizado.'}`);
     }

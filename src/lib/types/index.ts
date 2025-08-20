@@ -233,7 +233,6 @@ export type StoreConfig = {
         city: string;
         postalCode: string;
         country: string;
-        ruc: string;
     };
     currency: {
         code: string; // e.g., "USD"
@@ -257,7 +256,7 @@ export type StoreConfig = {
     eSignatureFile?: string; // base64 encoded .p12 file
     isEInvoicingEnabled: boolean;
     nextInvoiceNumber: number;
-    eInvoicingEnvironment: '1' | '2';
+    eInvoicingEnvironment: '1' | '2'; // 1 for Pruebas, 2 for Produccion
 };
 
 export type Giveaway = {

@@ -22,20 +22,22 @@ export async function documentAuthorization(
 
   // Se crea una promesa para manejar la llamada asíncrona al servicio SOAP.
   const authorizationRequest = new Promise((resolve, reject) => {
-    createClient(authorizationUrl, (err: any, client: Client) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      // Se llama al método 'autorizacionComprobante' del servicio web.
-      client.autorizacionComprobante(params, (err: any, result: unknown) => {
+    try {
+      createClient(authorizationUrl, (err: any, client: Client) => {
         if (err) {
-          reject(err);
-          return;
+          return reject(new Error('Error al crear el cliente SOAP: ' + (err.message || 'Error desconocido')));
         }
-        resolve(result);
+        // Se llama al método 'autorizacionComprobante' del servicio web.
+        client.autorizacionComprobante(params, (err: any, result: unknown) => {
+          if (err) {
+             return reject(new Error('Error en la llamada a autorizacionComprobante: ' + (err.message || 'Error desconocido')));
+          }
+          resolve(result);
+        });
       });
-    });
+    } catch (clientError) {
+        reject(new Error('Excepción al crear el cliente SOAP.'));
+    }
   });
 
   // Se espera a que la promesa se resuelva.
