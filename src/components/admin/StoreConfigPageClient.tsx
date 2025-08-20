@@ -30,6 +30,7 @@ const currencies = [
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "El nombre de la tienda es requerido." }),
+  legalName: z.string().min(2, { message: "La razón social es requerida." }).optional(),
   description: z.string().min(10, { message: "La descripción es muy corta." }),
   logoUrl: z.string().url({ message: "URL inválida." }).or(z.literal('')).optional(),
   logoUrlDark: z.string().url({ message: "URL inválida." }).or(z.literal('')).optional(),
@@ -79,6 +80,7 @@ export default function StoreConfigPageClient({ initialConfig }: StoreConfigPage
     resolver: zodResolver(formSchema),
     defaultValues: {
       ...initialConfig,
+      legalName: initialConfig.legalName || initialConfig.name,
       logoUrl: initialConfig.logoUrl || '',
       logoUrlDark: initialConfig.logoUrlDark || '',
       eSignatureFile: initialConfig.eSignatureFile || '',
@@ -126,9 +128,14 @@ export default function StoreConfigPageClient({ initialConfig }: StoreConfigPage
                         <CardTitle>Identidad y Configuración Técnica</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        <FormField control={form.control} name="name" render={({ field }) => (
-                            <FormItem><FormLabel>Nombre de la Tienda</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                        )}/>
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <FormField control={form.control} name="name" render={({ field }) => (
+                                <FormItem><FormLabel>Nombre de la Tienda (Comercial)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            )}/>
+                             <FormField control={form.control} name="legalName" render={({ field }) => (
+                                <FormItem><FormLabel>Razón Social (Nombre Legal)</FormLabel><FormControl><Input {...field} /></FormControl><FormDescription>El nombre que aparece en el RUC y se usa para facturación.</FormDescription><FormMessage /></FormItem>
+                            )}/>
+                        </div>
                         <FormField control={form.control} name="description" render={({ field }) => (
                             <FormItem><FormLabel>Descripción Corta / Eslogan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )}/>

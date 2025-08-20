@@ -20,6 +20,7 @@ export async function getStoreConfigFromDb(): Promise<StoreConfig> {
         address: { ...(row.address || {}), ruc: row.ruc }, // Correctly assign ruc to address object
         logoUrl: row.logoUrl || '',
         logoUrlDark: row.logoUrlDark || '',
+        legalName: row.legalName || row.name, // Fallback to name if legalName is not set
         paymentGateways,
         socials: row.socials || {},
         isEInvoicingEnabled: row.isEInvoicingEnabled || false,
@@ -35,21 +36,21 @@ export async function updateStoreConfigInDb(config: Omit<StoreConfig, 'id'>): Pr
         delete paymentGateways.paypal.clientId;
     }
 
-    const { name, description, logoUrl, logoUrlDark, baseUrl, contactEmail, contactPhone, address, currency, socials, taxRate } = restOfConfig;
+    const { name, legalName, description, logoUrl, logoUrlDark, baseUrl, contactEmail, contactPhone, address, currency, socials, taxRate } = restOfConfig;
     const queryText = `
         UPDATE store_config
         SET
             name = $1, description = $2, "logoUrl" = $3, "baseUrl" = $4, "contactEmail" = $5,
             "contactPhone" = $6, address = $7, currency = $8, socials = $9, "taxRate" = $10,
             "paymentGateways" = $11, "logoUrlDark" = $12, "eSignatureFile" = $13,
-            "isEInvoicingEnabled" = $14, "nextInvoiceNumber" = $15, "eInvoicingEnvironment" = $16, ruc = $17
+            "isEInvoicingEnabled" = $14, "nextInvoiceNumber" = $15, "eInvoicingEnvironment" = $16, ruc = $17, "legalName" = $18
         WHERE id = 1
         RETURNING *`;
     const values = [
         name, description, logoUrl, baseUrl, contactEmail, contactPhone,
         { street: address.street, city: address.city, postalCode: address.postalCode, country: address.country },
         currency, socials, taxRate, paymentGateways, logoUrlDark, eSignatureFile,
-        isEInvoicingEnabled, nextInvoiceNumber, eInvoicingEnvironment, address.ruc
+        isEInvoicingEnabled, nextInvoiceNumber, eInvoicingEnvironment, address.ruc, legalName
     ];
     const result = await query<any>(queryText, values);
     const row = result[0];
@@ -59,4 +60,3 @@ export async function updateStoreConfigInDb(config: Omit<StoreConfig, 'id'>): Pr
         logoUrlDark: row.logoUrlDark || '',
      };
 }
-

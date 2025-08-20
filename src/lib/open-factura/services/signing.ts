@@ -1,19 +1,9 @@
-/**
- * @fileoverview Contiene las funciones para el firmado de documentos XML utilizando un
- * certificado P12, siguiendo el estándar XAdES-BES.
- */
+
 
 import * as forge from "node-forge";
 import { readFileSync } from "fs";
 import fetch from "node-fetch";
 
-// --- Funciones auxiliares para obtener archivos ---
-
-/**
- * Lee un archivo .p12 desde el sistema de archivos local.
- * @param {string} path - La ruta al archivo .p12.
- * @returns {ArrayBuffer} El contenido del archivo como un ArrayBuffer.
- */
 export function getP12FromLocalFile(path: string) {
   const file = readFileSync(path);
   const buffer = file.buffer.slice(
@@ -23,11 +13,6 @@ export function getP12FromLocalFile(path: string) {
   return buffer;
 }
 
-/**
- * Descarga un archivo .p12 desde una URL.
- * @param {string} url - La URL del archivo .p12.
- * @returns {Promise<ArrayBuffer>} Una promesa que se resuelve con el contenido del archivo.
- */
 export async function getP12FromUrl(url: string) {
   const file = await fetch(url)
     .then((response) => response.arrayBuffer())
@@ -35,21 +20,11 @@ export async function getP12FromUrl(url: string) {
   return file;
 }
 
-/**
- * Lee un archivo XML desde el sistema de archivos local.
- * @param {string} path - La ruta al archivo XML.
- * @returns {string} El contenido del archivo como una cadena de texto.
- */
 export function getXMLFromLocalFile(path: string) {
   const file = readFileSync(path, "utf8");
   return file;
 }
 
-/**
- * Descarga un archivo XML desde una URL.
- * @param {string} url - La URL del archivo XML.
- * @returns {Promise<string>} Una promesa que se resuelve con el contenido del archivo.
- */
 export async function getXMLFromLocalUrl(url: string) {
   const file = await fetch(url)
     .then((response) => response.text())
@@ -57,21 +32,10 @@ export async function getXMLFromLocalUrl(url: string) {
   return file;
 }
 
-// --- Funciones criptográficas y de formato ---
-
-/**
- * Calcula el hash SHA-1 de un texto y lo devuelve en formato Base64.
- * @param {string} text - El texto a hashear.
- * @param {forge.Encoding} [encoding="utf8"] - La codificación del texto.
- * @returns {string} El hash en Base64.
- */
 function sha1Base64(text: string, encoding: forge.Encoding = "utf8") {
-  let md = forge.md.sha1.create();
+  const md = forge.md.sha1.create();
   md.update(text, encoding);
-  const hash = md.digest().toHex();
-  const buffer = Buffer.from(hash, "hex");
-  const base64 = buffer.toString("base64");
-  return base64;
+  return forge.util.encode64(md.digest().getBytes());
 }
 
 function hexToBase64(hex: string) {
@@ -94,13 +58,6 @@ function getRandomNumber(min = 990, max = 9999) {
   return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
-/**
- * Firma un documento XML con un certificado P12.
- * @param {ArrayBuffer} p12Data - El contenido del archivo .p12.
- * @param {string} p12Password - La contraseña del archivo .p12.
- * @param {string} xmlData - El contenido del XML a firmar.
- * @returns {Promise<string>} El documento XML firmado.
- */
 export async function signXml(
   p12Data: ArrayBuffer,
   p12Password: string,
@@ -109,11 +66,11 @@ export async function signXml(
   const arrayBuffer = p12Data;
   let xml = xmlData;
 
-  // Normaliza el XML para el proceso de firma.
-  xml = xml.trim();
+  // Replace only spaces between tags
+  xml = xml.replace(/>\s+</g, '><').trim();
   xml = xml.replace('<?xml version="1.0" encoding="UTF-8"?>', "").trim();
 
-  // Decodifica el archivo P12.
+
   const arrayUint8 = new Uint8Array(arrayBuffer);
   const base64 = forge.util.binary.base64.encode(arrayUint8);
   const der = forge.util.decode64(base64);
@@ -146,7 +103,7 @@ export async function signXml(
     .map((attribute) => {
       return `${attribute.shortName}=${attribute.value}`;
     })
-    .join(", ");
+    .join(",");
 
   if (/BANCO CENTRAL/i.test(friendlyName)) {
     let keys = pkcs8Bags[(forge as any).oids.pkcs8ShroudedKeyBag];
@@ -165,7 +122,6 @@ export async function signXml(
 
   certificate = cert.cert;
 
-  // Verifica la validez del certificado.
   const notBefore = certificate!.validity["notBefore"];
   const notAfter = certificate!.validity["notAfter"];
   const date = new Date();
@@ -174,7 +130,6 @@ export async function signXml(
     throw new Error("Expired certificate");
   }
 
-  // Extrae la clave privada y la información del certificado.
   const key = (pkcs8 as any).key ?? (pkcs8 as any).asn1;
   const certificateX509_pem = forge.pki.certificateToAsn1(certificate!);
   const certificateX509_der = forge.asn1
@@ -191,8 +146,7 @@ export async function signXml(
   );
 
   certificateX509 = certificateX509
-    .replace(/\r?\n|\r/g, "")
-    .replace(/([^\0]{76})/g, "$1\n");
+    .replace(/\r?\n|\r/g, "");
 
   const certificateX509_serialNumber = parseInt(certificate!.serialNumber, 16);
 
@@ -202,7 +156,6 @@ export async function signXml(
 
   const sha1_xml = sha1Base64(xml, "utf8");
 
-  // Construcción de la firma XAdES-BES.
   const nameSpaces =
     'xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:etsi="http://uri.etsi.org/01903/v1.3.2#"';
 
@@ -274,41 +227,19 @@ export async function signXml(
     "utf8"
   );
 
-  let keyInfo = "";
-  keyInfo += '<ds:KeyInfo Id="Certificate' + certificateNumber + '">';
-  keyInfo += "\n<ds:X509Data>";
-  keyInfo += "\n<ds:X509Certificate>\n";
-  keyInfo += certificateX509;
-  keyInfo += "\n</ds:X509Certificate>";
-  keyInfo += "\n</ds:X509Data>";
-  keyInfo += "\n<ds:KeyValue>";
-  keyInfo += "\n<ds:RSAKeyValue>";
-  keyInfo += "\n<ds:Modulus>\n";
-  keyInfo += modulus;
-  keyInfo += "\n</ds:Modulus>";
-  keyInfo += "\n<ds:Exponent>\n";
-  keyInfo += exponent;
-  keyInfo += "\n</ds:Exponent>";
-  keyInfo += "\n</ds:RSAKeyValue>";
-  keyInfo += "\n</ds:KeyValue>";
-  keyInfo += "\n</ds:KeyInfo>";
+  const keyInfo = `<ds:KeyInfo Id="Certificate${certificateNumber}"><ds:X509Data><ds:X509Certificate>${certificateX509}</ds:X509Certificate></ds:X509Data><ds:KeyValue><ds:RSAKeyValue><ds:Modulus>${modulus}</ds:Modulus><ds:Exponent>${exponent}</ds:Exponent></ds:RSAKeyValue></ds:KeyValue></ds:KeyInfo>`;
 
-  const sha1KeyInfo = sha1Base64(
-    keyInfo.replace('<ds:KeyInfo', '<ds:KeyInfo ' + nameSpaces),
-    "utf8"
-  );
+  const sha1KeyInfo = sha1Base64(keyInfo.replace('<ds:KeyInfo', `<ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">`), "utf8");
 
   let signedInfo = "";
   signedInfo +=
     '<ds:SignedInfo Id="Signature-SignedInfo' + signedInfoNumber + '">';
   signedInfo +=
-    '\n<ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315">';
-  signedInfo += "</ds:CanonicalizationMethod>";
+    '<ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></ds:CanonicalizationMethod>';
   signedInfo +=
-    '\n<ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1">';
-  signedInfo += "</ds:SignatureMethod>";
+    '<ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></ds:SignatureMethod>';
   signedInfo +=
-    '\n<ds:Reference Id="SignedPropertiesID' +
+    '<ds:Reference Id="SignedPropertiesID' +
     signedPropertiesIdNumber +
     '" Type="http://uri.etsi.org/01903#SignedProperties" URI="#Signature' +
     signatureNumber +
@@ -316,43 +247,39 @@ export async function signXml(
     signedPropertiesNumber +
     '">';
   signedInfo +=
-    '\n<ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1">';
-  signedInfo += "</ds:DigestMethod>";
-  signedInfo += "\n<ds:DigestValue>";
+    '<ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>';
+  signedInfo += "<ds:DigestValue>";
   signedInfo += sha1SignedProperties;
   signedInfo += "</ds:DigestValue>";
-  signedInfo += "\n</ds:Reference>";
-  signedInfo += '\n<ds:Reference URI="#Certificate' + certificateNumber + '">';
+  signedInfo += "</ds:Reference>";
+  signedInfo += '<ds:Reference URI="#Certificate' + certificateNumber + '">';
   signedInfo +=
-    '\n<ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1">';
-  signedInfo += "</ds:DigestMethod>";
-  signedInfo += "\n<ds:DigestValue>";
+    '<ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>';
+  signedInfo += "<ds:DigestValue>";
   signedInfo += sha1KeyInfo;
   signedInfo += "</ds:DigestValue>";
-  signedInfo += "\n</ds:Reference>";
+  signedInfo += "</ds:Reference>";
 
   signedInfo +=
-    '\n<ds:Reference Id="Reference-ID-' +
+    '<ds:Reference Id="Reference-ID-' +
     referenceIdNumber +
     '" URI="#comprobante">';
-  signedInfo += "\n<ds:Transforms>";
+  signedInfo += "<ds:Transforms>";
   signedInfo +=
-    '\n<ds:Transform Algorithm="http://www.w3.org/2000/09/xml-dsub#enveloped-signature">';
-  signedInfo += "</ds:Transform>";
-  signedInfo += "\n</ds:Transforms>";
+    '<ds:Transform Algorithm="http://www.w3.org/2000/09/xml-dsub#enveloped-signature"></ds:Transform>';
+  signedInfo += "</ds:Transforms>";
   signedInfo +=
-    '\n<ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1">';
-  signedInfo += "</ds:DigestMethod>";
-  signedInfo += "\n<ds:DigestValue>";
+    '<ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>';
+  signedInfo += "<ds:DigestValue>";
   signedInfo += sha1_xml;
   signedInfo += "</ds:DigestValue>";
-  signedInfo += "\n</ds:Reference>";
+  signedInfo += "</ds:Reference>";
 
-  signedInfo += "\n</ds:SignedInfo>";
+  signedInfo += "</ds:SignedInfo>";
 
   const canonicalizedSignedInfo = signedInfo.replace(
     "<ds:SignedInfo",
-    "<ds:SignedInfo " + nameSpaces
+    `<ds:SignedInfo ${nameSpaces}`
   );
 
   const md = forge.md.sha1.create();
@@ -362,8 +289,8 @@ export async function signXml(
 
   let xadesBes = "";
   xadesBes +=
-    "<ds:Signature " + nameSpaces + ' Id="Signature' + signatureNumber + '">';
-  xadesBes += "\n" + signedInfo;
+    '<ds:Signature ' + nameSpaces + ' Id="Signature' + signatureNumber + '">';
+  xadesBes += "\n" + canonicalizedSignedInfo.replace(/\r?\n|\r/g, "");
 
   xadesBes +=
     '\n<ds:SignatureValue Id="SignatureValue' + signatureValueNumber + '">\n';
@@ -386,6 +313,7 @@ export async function signXml(
   xadesBes += "</ds:Object>";
   xadesBes += "</ds:Signature>";
 
-  // Inserta la firma XAdES-BES en el XML original.
   return '<?xml version="1.0" encoding="UTF-8"?>\n' + xml.replace(/(<[^<]+)$/, xadesBes + "$1");
 }
+
+

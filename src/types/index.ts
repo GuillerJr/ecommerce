@@ -222,6 +222,7 @@ export type Coupon = {
 export type StoreConfig = {
     id: number;
     name: string;
+    legalName?: string;
     description: string;
     logoUrl?: string;
     logoUrlDark?: string;

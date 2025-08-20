@@ -23,27 +23,58 @@ export function generateInvoiceXml(invoice: Invoice) {
  * @param {InvoiceInput} invoiceData - Los datos de entrada para la factura.
  * @returns {{ invoice: Invoice, accessKey: string }} Un objeto que contiene la factura completa y su clave de acceso.
  */
-export function generateInvoice(invoiceData: InvoiceInput) {
-  // Genera la clave de acceso de 49 dígitos.
+export function generateInvoice(invoiceData: { factura: InvoiceInput }) {
   const accessKey = generateAccessKey({
     date: new Date(),
-    codDoc: invoiceData.infoTributaria.codDoc,
-    ruc: invoiceData.infoTributaria.ruc,
-    environment: invoiceData.infoTributaria.ambiente,
-    establishment: invoiceData.infoTributaria.estab,
-    emissionPoint: invoiceData.infoTributaria.ptoEmi,
-    sequential: invoiceData.infoTributaria.secuencial,
+    codDoc: invoiceData.factura.infoTributaria.codDoc,
+    ruc: invoiceData.factura.infoTributaria.ruc,
+    environment: invoiceData.factura.infoTributaria.ambiente,
+    establishment: invoiceData.factura.infoTributaria.estab,
+    emissionPoint: invoiceData.factura.infoTributaria.ptoEmi,
+    sequential: invoiceData.factura.infoTributaria.secuencial,
   });
 
-  // Construye el objeto de factura final, añadiendo la clave de acceso a la información tributaria.
+  const infoTributaria: any = {
+    ambiente: invoiceData.factura.infoTributaria.ambiente,
+    tipoEmision: invoiceData.factura.infoTributaria.tipoEmision,
+    razonSocial: invoiceData.factura.infoTributaria.razonSocial,
+    ruc: invoiceData.factura.infoTributaria.ruc,
+    claveAcceso: accessKey,
+    codDoc: invoiceData.factura.infoTributaria.codDoc,
+    estab: invoiceData.factura.infoTributaria.estab,
+    ptoEmi: invoiceData.factura.infoTributaria.ptoEmi,
+    secuencial: invoiceData.factura.infoTributaria.secuencial,
+    dirMatriz: invoiceData.factura.infoTributaria.dirMatriz,
+  };
+
+  if (invoiceData.factura.infoTributaria.nombreComercial) {
+      infoTributaria.nombreComercial = invoiceData.factura.infoTributaria.nombreComercial;
+  }
+
+  // Re-order for SRI compliance, placing claveAcceso after RUC
+  const orderedInfoTributaria = {
+      ambiente: infoTributaria.ambiente,
+      tipoEmision: infoTributaria.tipoEmision,
+      razonSocial: infoTributaria.razonSocial,
+      ...(infoTributaria.nombreComercial && { nombreComercial: infoTributaria.nombreComercial }),
+      ruc: infoTributaria.ruc,
+      claveAcceso: infoTributaria.claveAcceso,
+      codDoc: infoTributaria.codDoc,
+      estab: infoTributaria.estab,
+      ptoEmi: infoTributaria.ptoEmi,
+      secuencial: infoTributaria.secuencial,
+      dirMatriz: infoTributaria.dirMatriz,
+  };
+
+
   const invoice: Invoice = {
     factura: {
       "@id": "comprobante",
       "@version": "1.1.0",
-      infoTributaria: { ...invoiceData.infoTributaria, claveAcceso: accessKey },
-      infoFactura: invoiceData.infoFactura,
-      detalles: invoiceData.detalles,
-      ...(invoiceData.infoAdicional && { infoAdicional: invoiceData.infoAdicional }),
+      infoTributaria: orderedInfoTributaria,
+      infoFactura: invoiceData.factura.infoFactura,
+      detalles: invoiceData.factura.detalles,
+      ...(invoiceData.factura.infoAdicional && { infoAdicional: invoiceData.factura.infoAdicional }),
     },
   };
 
