@@ -233,6 +233,7 @@ export type StoreConfig = {
         city: string;
         postalCode: string;
         country: string;
+        ruc: string;
     };
     currency: {
         code: string; // e.g., "USD"

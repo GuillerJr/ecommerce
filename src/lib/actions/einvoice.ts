@@ -56,7 +56,7 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
         tipoEmision: '1' as const,
         razonSocial: storeConfig.name,
         nombreComercial: storeConfig.name,
-        ruc: storeConfig.address.postalCode, // Assuming RUC is stored here
+        ruc: storeConfig.address.ruc,
         codDoc: '01' as const,
         estab: '001',
         ptoEmi: '001',

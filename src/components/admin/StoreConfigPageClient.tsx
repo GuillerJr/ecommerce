@@ -41,6 +41,7 @@ const formSchema = z.object({
     city: z.string().min(2, { message: "La ciudad es requerida."}),
     postalCode: z.string().min(2, { message: "El código postal es requerido."}),
     country: z.string().min(2, { message: "El país es requerido."}),
+    ruc: z.string().length(13, { message: "El RUC debe tener 13 dígitos." }),
   }),
   currency: z.object({
     code: z.string(),
@@ -267,8 +268,11 @@ export default function StoreConfigPageClient({ initialConfig }: StoreConfigPage
                                 <FormItem><FormLabel>Teléfono de Contacto</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                             )}/>
                          </div>
+                          <FormField control={form.control} name="address.ruc" render={({ field }) => (
+                            <FormItem><FormLabel>RUC</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                          )}/>
                          <FormField control={form.control} name="address.street" render={({ field }) => (
-                             <FormItem><FormLabel>Calle y Número</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                             <FormItem><FormLabel>Calle y Número (Matriz)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                          )}/>
                          <div className="grid md:grid-cols-3 gap-6">
                              <FormField control={form.control} name="address.city" render={({ field }) => (

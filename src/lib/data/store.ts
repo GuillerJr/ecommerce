@@ -17,6 +17,7 @@ export async function getStoreConfigFromDb(): Promise<StoreConfig> {
 
      return {
         ...row,
+        address: { ...row.address, ruc: row.ruc },
         logoUrl: row.logoUrl || '',
         logoUrlDark: row.logoUrlDark || '',
         paymentGateways,
@@ -41,10 +42,15 @@ export async function updateStoreConfigInDb(config: Omit<StoreConfig, 'id'>): Pr
             name = $1, description = $2, "logoUrl" = $3, "baseUrl" = $4, "contactEmail" = $5,
             "contactPhone" = $6, address = $7, currency = $8, socials = $9, "taxRate" = $10,
             "paymentGateways" = $11, "logoUrlDark" = $12, "eSignatureFile" = $13,
-            "isEInvoicingEnabled" = $14, "nextInvoiceNumber" = $15, "eInvoicingEnvironment" = $16
+            "isEInvoicingEnabled" = $14, "nextInvoiceNumber" = $15, "eInvoicingEnvironment" = $16, ruc = $17
         WHERE id = 1
         RETURNING *`;
-    const values = [name, description, logoUrl, baseUrl, contactEmail, contactPhone, address, currency, socials, taxRate, paymentGateways, logoUrlDark, eSignatureFile, isEInvoicingEnabled, nextInvoiceNumber, eInvoicingEnvironment];
+    const values = [
+        name, description, logoUrl, baseUrl, contactEmail, contactPhone,
+        { street: address.street, city: address.city, postalCode: address.postalCode, country: address.country },
+        currency, socials, taxRate, paymentGateways, logoUrlDark, eSignatureFile,
+        isEInvoicingEnabled, nextInvoiceNumber, eInvoicingEnvironment, address.ruc
+    ];
     const result = await query<any>(queryText, values);
     const row = result[0];
     return {
