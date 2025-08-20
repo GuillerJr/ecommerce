@@ -1,36 +1,6 @@
 
 
 import * as forge from "node-forge";
-import { readFileSync } from "fs";
-import fetch from "node-fetch";
-
-export function getP12FromLocalFile(path: string) {
-  const file = readFileSync(path);
-  const buffer = file.buffer.slice(
-    file.byteOffset,
-    file.byteOffset + file.byteLength
-  );
-  return buffer;
-}
-
-export async function getP12FromUrl(url: string) {
-  const file = await fetch(url)
-    .then((response) => response.arrayBuffer())
-    .then((data) => data);
-  return file;
-}
-
-export function getXMLFromLocalFile(path: string) {
-  const file = readFileSync(path, "utf8");
-  return file;
-}
-
-export async function getXMLFromLocalUrl(url: string) {
-  const file = await fetch(url)
-    .then((response) => response.text())
-    .then((data) => data);
-  return file;
-}
 
 function sha1Base64(text: string, encoding: forge.Encoding = "utf8") {
   const md = forge.md.sha1.create();
@@ -63,15 +33,12 @@ export async function signXml(
   p12Password: string,
   xmlData: string
 ) {
-  const arrayBuffer = p12Data;
   let xml = xmlData;
-
   // Replace only spaces between tags
   xml = xml.replace(/>\s+</g, '><').trim();
   xml = xml.replace('<?xml version="1.0" encoding="UTF-8"?>', "").trim();
 
-
-  const arrayUint8 = new Uint8Array(arrayBuffer);
+  const arrayUint8 = new Uint8Array(p12Data);
   const base64 = forge.util.binary.base64.encode(arrayUint8);
   const der = forge.util.decode64(base64);
 
@@ -145,8 +112,7 @@ export async function signXml(
     certificateX509.indexOf("\n-----END CERTIFICATE-----")
   );
 
-  certificateX509 = certificateX509
-    .replace(/\r?\n|\r/g, "");
+  certificateX509 = certificateX509.replace(/\r?\n|\r/g, "");
 
   const certificateX509_serialNumber = parseInt(certificate!.serialNumber, 16);
 
@@ -229,7 +195,7 @@ export async function signXml(
 
   const keyInfo = `<ds:KeyInfo Id="Certificate${certificateNumber}"><ds:X509Data><ds:X509Certificate>${certificateX509}</ds:X509Certificate></ds:X509Data><ds:KeyValue><ds:RSAKeyValue><ds:Modulus>${modulus}</ds:Modulus><ds:Exponent>${exponent}</ds:Exponent></ds:RSAKeyValue></ds:KeyValue></ds:KeyInfo>`;
 
-  const sha1KeyInfo = sha1Base64(keyInfo.replace('<ds:KeyInfo', `<ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">`), "utf8");
+  const sha1KeyInfo = sha1Base64(keyInfo.replace('<ds:KeyInfo', '<ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">'), "utf8");
 
   let signedInfo = "";
   signedInfo +=
@@ -266,7 +232,7 @@ export async function signXml(
     '" URI="#comprobante">';
   signedInfo += "<ds:Transforms>";
   signedInfo +=
-    '<ds:Transform Algorithm="http://www.w3.org/2000/09/xml-dsub#enveloped-signature"></ds:Transform>';
+    '<ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>';
   signedInfo += "</ds:Transforms>";
   signedInfo +=
     '<ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>';
@@ -297,7 +263,7 @@ export async function signXml(
 
   xadesBes += signature;
   xadesBes += "\n</ds:SignatureValue>";
-  xadesBes += "\n" + keyInfo;
+  xadesBes += "\n" + keyInfo.replace(/\r?\n|\r/g, "");
   xadesBes +=
     '\n<ds:Object Id="Signature' +
     signatureNumber +
@@ -307,7 +273,7 @@ export async function signXml(
 
   xadesBes +=
     '<etsi:QualifyingProperties Target="#Signature' + signatureNumber + '">';
-  xadesBes += signedProperties;
+  xadesBes += signedProperties.replace(/\r?\n|\r/g, "");
 
   xadesBes += "</etsi:QualifyingProperties>";
   xadesBes += "</ds:Object>";
@@ -316,4 +282,4 @@ export async function signXml(
   return '<?xml version="1.0" encoding="UTF-8"?>\n' + xml.replace(/(<[^<]+)$/, xadesBes + "$1");
 }
 
-
+      

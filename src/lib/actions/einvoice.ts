@@ -61,11 +61,6 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
       dirMatriz: storeConfig.address.street,
     };
 
-    // Condicionalmente añadir nombreComercial solo si es diferente
-    if (storeConfig.name && storeConfig.name !== storeConfig.legalName) {
-      infoTributaria.nombreComercial = storeConfig.name;
-    }
-
     const invoiceData = {
         factura: {
             infoTributaria,
@@ -188,4 +183,3 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
     return { success: false, message };
   }
 }
-
