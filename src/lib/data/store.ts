@@ -53,7 +53,7 @@ export async function updateStoreConfigInDb(config: Omit<StoreConfig, 'id'>): Pr
         { street: address.street, city: address.city, postalCode: address.postalCode, country: address.country },
         currency, socials, taxRate, paymentGateways, logoUrlDark, eSignatureFile,
         isEInvoicingEnabled, nextInvoiceNumber, eInvoicingEnvironment, address.ruc, legalName,
-        contribuyenteRimpe
+        contribuyenteRimpe === 'none' ? null : contribuyenteRimpe
     ];
     const result = await query<any>(queryText, values);
     const row = result[0];

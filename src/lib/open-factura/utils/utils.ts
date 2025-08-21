@@ -50,16 +50,32 @@ export function generateAccessKey(accessKeyData: GenerateAccessKey) {
  * @returns {string} La fecha en formato ddmmaaaa.
  */
 function formatDateToDDMMYYYY(date: Date) {
-  let day = date.getDate();
-  let month = date.getMonth() + 1; // getMonth() es base 0
-  let year = date.getFullYear();
-
-  // Asegura que día y mes tengan dos dígitos.
-  const finalDay = day < 10 ? "0" + day : day;
-  const finalMonth = month < 10 ? "0" + month : month;
-
-  return `${finalDay}${finalMonth}${year}`;
+  // Forzamos America/Guayaquil para evitar “fecha futura” con servidores en UTC
+  const parts = new Intl.DateTimeFormat('es-EC', {
+    timeZone: 'America/Guayaquil',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).formatToParts(date);
+  const dd = parts.find(p => p.type === 'day')!.value;
+  const mm = parts.find(p => p.type === 'month')!.value;
+  const yyyy = parts.find(p => p.type === 'year')!.value;
+  return `${dd}${mm}${yyyy}`;
 }
+
+export function getFormattedDate(date: Date) {
+  const parts = new Intl.DateTimeFormat('es-EC', {
+    timeZone: 'America/Guayaquil',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).formatToParts(date);
+  const dd = parts.find(p => p.type === 'day')!.value;
+  const mm = parts.find(p => p.type === 'month')!.value;
+  const yyyy = parts.find(p => p.type === 'year')!.value;
+  return `${dd}/${mm}/${yyyy}`;
+}
+
 
 /**
  * Genera un número aleatorio de 8 dígitos para la clave de acceso.

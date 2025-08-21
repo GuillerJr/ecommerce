@@ -7,16 +7,19 @@ import { createClient, Client } from "soap";
 
 /**
  * Envía un comprobante electrónico en formato XML al SRI para su validación.
- * @param {string} stringXML - El contenido del archivo XML firmado, como una cadena de texto.
+ * @param {string | Buffer} stringXML - El contenido del archivo XML firmado, como una cadena de texto.
  * @param {string} receptionUrl - La URL del WSDL del servicio de recepción del SRI (pruebas o producción).
  * @returns {Promise<any>} Una promesa que se resuelve con la respuesta del servicio de recepción del SRI.
  */
 export async function documentReception(
-  stringXML: string,
+  stringXML: string | Buffer,
   receptionUrl: string
 ): Promise<any> {
-  // El SRI requiere que el XML se envíe como una cadena Base64.
-  const base64XML = Buffer.from(stringXML).toString("base64");
+  if (!stringXML) throw new Error('XML firmado vacío (documentReception)');
+  // El SRI requiere el XML en Base64
+  const base64XML = Buffer.isBuffer(stringXML)
+    ? stringXML.toString('base64')
+    : Buffer.from(stringXML, 'utf8').toString('base64');
   let params = { xml: base64XML };
 
   // Se crea una promesa para manejar la llamada asíncrona al servicio SOAP.
@@ -44,3 +47,5 @@ export async function documentReception(
 
   return await receptionRequest;
 }
+
+    
