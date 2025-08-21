@@ -6,7 +6,6 @@ import type { Order, Product, StoreConfig } from '@/types';
 import { getOrderByIdFromDb } from '../data/orders';
 import { getStoreConfigFromDb, updateStoreConfigInDb } from '../data/store';
 import {
-  generateInvoice,
   signXml,
   documentReception,
   documentAuthorization,
@@ -46,29 +45,25 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
     const sriUrls = getSriUrls(storeConfig.eInvoicingEnvironment);
     const taxRateCode = storeConfig.taxRate === 12 ? '2' : (storeConfig.taxRate === 15 ? '4' : '0');
     const secuencial = String(storeConfig.nextInvoiceNumber).padStart(9, '0');
-    const emissionDate = new Date(); // Use current date for everything
     
-    // Preparar infoTributaria
-    const infoTributaria: any = {
-      ambiente: storeConfig.eInvoicingEnvironment,
-      tipoEmision: '1' as const,
-      razonSocial: storeConfig.legalName,
-      ruc: storeConfig.address.ruc,
-      codDoc: '01' as const,
-      estab: '001',
-      ptoEmi: '001',
-      secuencial: secuencial,
-      dirMatriz: storeConfig.address.street,
-    };
-    if (storeConfig.contribuyenteRimpe && storeConfig.contribuyenteRimpe !== 'none') {
-        infoTributaria.contribuyenteRimpe = storeConfig.contribuyenteRimpe;
-    }
-    
+    // Preparar datos para la factura
     const invoiceData = {
         factura: {
-            infoTributaria,
+            infoTributaria: {
+              ambiente: storeConfig.eInvoicingEnvironment,
+              tipoEmision: '1' as const,
+              razonSocial: storeConfig.legalName,
+              nombreComercial: storeConfig.name !== storeConfig.legalName ? storeConfig.name : undefined,
+              ruc: storeConfig.address.ruc,
+              codDoc: '01' as const,
+              estab: '001',
+              ptoEmi: '001',
+              secuencial: secuencial,
+              dirMatriz: storeConfig.address.street,
+              ...(storeConfig.contribuyenteRimpe && storeConfig.contribuyenteRimpe !== 'none' && { contribuyenteRimpe: storeConfig.contribuyenteRimpe }),
+            },
             infoFactura: {
-                fechaEmision: emissionDate.toLocaleDateString('es-EC', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+                fechaEmision: new Date().toLocaleDateString('es-EC', { day: '2-digit', month: '2-digit', year: 'numeric' }),
                 dirEstablecimiento: storeConfig.address.street,
                 obligadoContabilidad: 'SI' as const,
                 tipoIdentificacionComprador: '05' as const, // Cédula por defecto
@@ -81,7 +76,7 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
                     totalImpuesto: [
                     {
                         codigo: '2' as const,
-                        codigoPorcentaje: taxRateCode,
+                        codigoPorcentaje: taxRateCode as any,
                         baseImponible: (order.subtotal - order.discountAmount).toFixed(2),
                         valor: order.taxAmount?.toFixed(2) || '0.00',
                     },
@@ -117,7 +112,7 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
                             impuesto: [
                                 {
                                     codigo: '2' as const,
-                                    codigoPorcentaje: taxRateCode,
+                                    codigoPorcentaje: taxRateCode as any,
                                     tarifa: String(storeConfig.taxRate || 0),
                                     baseImponible: itemTotal.toFixed(2),
                                     valor: taxValue,
@@ -138,10 +133,8 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
         }
     };
     
-    const { xml, accessKey } = generateInvoice({factura: {...invoiceData.factura, infoTributaria: {...invoiceData.factura.infoTributaria, date: emissionDate} as any}});
-    
     const signatureBuffer = Buffer.from(storeConfig.eSignatureFile, 'base64');
-    const signedXml = await signXml(signatureBuffer, process.env.E_SIGNATURE_PASSWORD, xml);
+    const { signedXml, accessKey } = await signXml(signatureBuffer, process.env.E_SIGNATURE_PASSWORD!, invoiceData);
 
     const receptionResult = await documentReception(signedXml, sriUrls.reception);
     const receptionState = receptionResult?.RespuestaRecepcionComprobante?.estado;
