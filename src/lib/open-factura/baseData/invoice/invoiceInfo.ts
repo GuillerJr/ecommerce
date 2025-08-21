@@ -31,11 +31,16 @@ export type TotalWithTaxes = {
  * Define una forma de pago.
  * @property {string} formaPago - Código de la forma de pago (ej. '20' para "OTROS CON UTILIZACION DEL SISTEMA FINANCIERO").
  * @property {string} total - El monto pagado con esta forma.
+ * @property {string} [plazo] - El plazo del pago.
+ * @property {string} [unidadTiempo] - La unidad de tiempo del plazo (ej. "días").
  */
 export type Payment = {
   formaPago: string; // ej. 20 para Tarjeta de Credito
   total: string;
+  plazo?: string;
+  unidadTiempo?: string;
 };
+
 
 /**
  * @type {Payments}
@@ -55,6 +60,7 @@ export type Payments = {
  * @property {string} tipoIdentificacionComprador - Código del tipo de identificación del comprador (04 RUC, 05 Cédula, 07 Consumidor Final).
  * @property {string} razonSocialComprador - Nombre o razón social del comprador.
  * @property {string} identificacionComprador - Número de identificación del comprador.
+ * @property {string} direccionComprador - Dirección del comprador (opcional).
  * @property {string} totalSinImpuestos - Suma de todos los `precioTotalSinImpuesto` de los detalles.
  * @property {string} totalDescuento - Suma de todos los descuentos.
  * @property {TotalWithTaxes} totalConImpuestos - Objeto que desglosa los totales por cada tipo de impuesto.
@@ -70,6 +76,7 @@ export type InvoiceInfo = {
   tipoIdentificacionComprador: "04" | "05" | "06" | "07" | "08";
   razonSocialComprador: string;
   identificacionComprador: string;
+  direccionComprador?: string;
   totalSinImpuestos: string;
   totalDescuento: string;
   totalConImpuestos: TotalWithTaxes;

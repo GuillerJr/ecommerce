@@ -23,9 +23,9 @@ function generateInvoiceXml(invoice: Invoice) {
  * @param {InvoiceInput} invoiceData - Los datos de entrada para la factura.
  * @returns {{ invoice: Invoice, accessKey: string, xml: string }} Un objeto que contiene la factura completa, su clave de acceso y el XML.
  */
-export function generateInvoice(invoiceData: { factura: InvoiceInput }) {
+export function generateInvoice(invoiceData: { factura: InvoiceInput & { infoTributaria: { date: Date } } }) {
   const accessKey = generateAccessKey({
-    date: new Date(),
+    date: invoiceData.factura.infoTributaria.date,
     codDoc: invoiceData.factura.infoTributaria.codDoc,
     ruc: invoiceData.factura.infoTributaria.ruc,
     environment: invoiceData.factura.infoTributaria.ambiente,
@@ -34,54 +34,49 @@ export function generateInvoice(invoiceData: { factura: InvoiceInput }) {
     sequential: invoiceData.factura.infoTributaria.secuencial,
   });
 
+  const { date, ...infoTributariaRest } = invoiceData.factura.infoTributaria;
+
   const infoTributaria: any = {
-      ambiente: invoiceData.factura.infoTributaria.ambiente,
-      tipoEmision: invoiceData.factura.infoTributaria.tipoEmision,
-      razonSocial: invoiceData.factura.infoTributaria.razonSocial,
-      ruc: invoiceData.factura.infoTributaria.ruc,
+      ...infoTributariaRest,
       claveAcceso: accessKey,
-      codDoc: invoiceData.factura.infoTributaria.codDoc,
-      estab: invoiceData.factura.infoTributaria.estab,
-      ptoEmi: invoiceData.factura.infoTributaria.ptoEmi,
-      secuencial: invoiceData.factura.infoTributaria.secuencial,
-      dirMatriz: invoiceData.factura.infoTributaria.dirMatriz,
   };
 
-  if (invoiceData.factura.infoTributaria.contribuyenteRimpe) {
-      infoTributaria.contribuyenteRimpe = invoiceData.factura.infoTributaria.contribuyenteRimpe;
+    if (invoiceData.factura.infoTributaria.contribuyenteRimpe) {
+        infoTributaria.contribuyenteRimpe = invoiceData.factura.infoTributaria.contribuyenteRimpe;
+    }
+
+    // Re-order for SRI compliance, placing claveAcceso after RUC
+    const orderedInfoTributaria: any = {
+        ambiente: infoTributaria.ambiente,
+        tipoEmision: infoTributaria.tipoEmision,
+        razonSocial: infoTributaria.razonSocial,
+        ruc: infoTributaria.ruc,
+        claveAcceso: infoTributaria.claveAcceso,
+        codDoc: infoTributaria.codDoc,
+        estab: infoTributaria.estab,
+        ptoEmi: infoTributaria.ptoEmi,
+        secuencial: infoTributaria.secuencial,
+        dirMatriz: infoTributaria.dirMatriz,
+    };
+
+    if (infoTributaria.contribuyenteRimpe) {
+        orderedInfoTributaria.contribuyenteRimpe = infoTributaria.contribuyenteRimpe;
+    }
+
+
+    const invoice: Invoice = {
+      factura: {
+        "@id": "comprobante",
+        "@version": "1.1.0",
+        infoTributaria: orderedInfoTributaria,
+        infoFactura: invoiceData.factura.infoFactura,
+        detalles: invoiceData.factura.detalles,
+        ...(invoiceData.factura.infoAdicional && { infoAdicional: invoiceData.factura.infoAdicional }),
+      },
+    };
+
+    const xml = generateInvoiceXml(invoice);
+
+    return { invoice, accessKey, xml };
   }
-
-  // Re-order for SRI compliance, placing claveAcceso after RUC
-  const orderedInfoTributaria: any = {
-      ambiente: infoTributaria.ambiente,
-      tipoEmision: infoTributaria.tipoEmision,
-      razonSocial: infoTributaria.razonSocial,
-      ruc: infoTributaria.ruc,
-      claveAcceso: infoTributaria.claveAcceso,
-      codDoc: infoTributaria.codDoc,
-      estab: infoTributaria.estab,
-      ptoEmi: infoTributaria.ptoEmi,
-      secuencial: infoTributaria.secuencial,
-      dirMatriz: infoTributaria.dirMatriz,
-  };
-
-  if (infoTributaria.contribuyenteRimpe) {
-      orderedInfoTributaria.contribuyenteRimpe = infoTributaria.contribuyenteRimpe;
-  }
-
-
-  const invoice: Invoice = {
-    factura: {
-      "@id": "comprobante",
-      "@version": "1.1.0",
-      infoTributaria: orderedInfoTributaria,
-      infoFactura: invoiceData.factura.infoFactura,
-      detalles: invoiceData.factura.detalles,
-      ...(invoiceData.factura.infoAdicional && { infoAdicional: invoiceData.factura.infoAdicional }),
-    },
-  };
-
-  const xml = generateInvoiceXml(invoice);
-
-  return { invoice, accessKey, xml };
-}
+  

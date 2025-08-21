@@ -46,6 +46,7 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
     const sriUrls = getSriUrls(storeConfig.eInvoicingEnvironment);
     const taxRateCode = storeConfig.taxRate === 12 ? '2' : (storeConfig.taxRate === 15 ? '4' : '0');
     const secuencial = String(storeConfig.nextInvoiceNumber).padStart(9, '0');
+    const emissionDate = new Date(); // Use current date for everything
     
     // Preparar infoTributaria
     const infoTributaria: any = {
@@ -59,17 +60,21 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
       secuencial: secuencial,
       dirMatriz: storeConfig.address.street,
     };
+    if (storeConfig.contribuyenteRimpe && storeConfig.contribuyenteRimpe !== 'none') {
+        infoTributaria.contribuyenteRimpe = storeConfig.contribuyenteRimpe;
+    }
     
     const invoiceData = {
         factura: {
             infoTributaria,
             infoFactura: {
-                fechaEmision: new Date(order.date).toLocaleDateString('es-EC', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+                fechaEmision: emissionDate.toLocaleDateString('es-EC', { day: '2-digit', month: '2-digit', year: 'numeric' }),
                 dirEstablecimiento: storeConfig.address.street,
                 obligadoContabilidad: 'SI' as const,
                 tipoIdentificacionComprador: '05' as const, // Cédula por defecto
                 razonSocialComprador: order.customerName,
                 identificacionComprador: order.identification || '9999999999',
+                direccionComprador: order.shippingAddress?.address || 'N/A',
                 totalSinImpuestos: order.subtotal.toFixed(2),
                 totalDescuento: order.discountAmount.toFixed(2),
                 totalConImpuestos: {
@@ -88,8 +93,10 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
                 pagos: {
                     pago: [
                     {
-                        formaPago: '20',
+                        formaPago: '20', // Otros con utilización del sistema financiero
                         total: order.total.toFixed(2),
+                        plazo: '0',
+                        unidadTiempo: 'días',
                     },
                     ],
                 },
@@ -131,7 +138,7 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
         }
     };
     
-    const { xml, accessKey } = generateInvoice(invoiceData as any);
+    const { xml, accessKey } = generateInvoice({factura: {...invoiceData.factura, infoTributaria: {...invoiceData.factura.infoTributaria, date: emissionDate} as any}});
     
     const signatureBuffer = Buffer.from(storeConfig.eSignatureFile, 'base64');
     const signedXml = await signXml(signatureBuffer, process.env.E_SIGNATURE_PASSWORD, xml);
