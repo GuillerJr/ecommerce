@@ -186,19 +186,34 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
     
     try {
         const authorizationResult = await documentAuthorization(accessKey, sriUrls.authorization);
-        const authorization = authorizationResult?.autorizaciones?.autorizacion;
-        
+        const resp = authorizationResult?.RespuestaAutorizacionComprobante;
+        // La respuesta puede traer un objeto o un array de autorizaciones
+        let authorization = resp?.autorizaciones?.autorizacion;
+        if (Array.isArray(authorization)) authorization = authorization[0];
+
         if (!authorization || authorization.estado !== 'AUTORIZADO') {
-            console.error("SRI Authorization Error Details:", JSON.stringify(authorizationResult, null, 2));
-            const errorMessage = authorization?.mensajes?.mensaje?.informacionAdicional || 'No autorizado.';
-            await query('UPDATE orders SET "eInvoiceStatus" = $1, "eInvoiceAuthorization" = $2 WHERE id = $3', ['REJECTED', JSON.stringify(authorization?.mensajes), orderId]);
-            throw new Error(`SRI: ${errorMessage}`);
+          console.error("SRI Authorization Error Details:", JSON.stringify(authorizationResult, null, 2));
+          // mensajes puede ser null, objeto o array
+          const mensajes = authorization?.mensajes;
+          const mensaje = Array.isArray(mensajes?.mensaje)
+            ? mensajes.mensaje[0]
+            : mensajes?.mensaje;
+          const errorMessage = mensaje?.informacionAdicional || 'No autorizado.';
+          await query(
+            'UPDATE orders SET "eInvoiceStatus" = $1, "eInvoiceAuthorization" = $2 WHERE id = $3',
+            ['REJECTED', JSON.stringify(mensajes || null), orderId]
+          );
+          throw new Error(`SRI: ${errorMessage}`);
         }
 
-        const authorizationNumber = authorization.numeroAutorizacion;
+        const authorizationNumber =
+          authorization.numeroAutorizacion || resp?.claveAccesoConsultada || accessKey;
 
         await query('UPDATE orders SET "eInvoiceStatus" = $1, "eInvoiceAuthorization" = $2 WHERE id = $3', ['AUTHORIZED', authorizationNumber, orderId]);
-        await updateStoreConfigInDb({ ...storeConfig, nextInvoiceNumber: storeConfig.nextInvoiceNumber + 1 });
+
+        // Fetch the latest config again before updating to avoid race conditions
+        const latestStoreConfig = await getStoreConfigFromDb();
+        await updateStoreConfigInDb({ ...latestStoreConfig, nextInvoiceNumber: latestStoreConfig.nextInvoiceNumber + 1 });
 
         const pdfBuffer = await generateRidePdf(order, storeConfig, authorizationNumber, allProducts, usedSequential);
         
@@ -218,5 +233,3 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
     return { success: false, message };
   }
 }
-
-    

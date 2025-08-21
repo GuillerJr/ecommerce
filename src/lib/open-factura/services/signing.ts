@@ -90,7 +90,7 @@ export async function signXml(
 
         const sha_xml = sha256Base64(xml, "utf8");
 
-        const nameSpaces = 'xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:etsi="http://uri.etsi.org/01903/v1.3.2#"';
+        const nameSpaces = 'xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:etsi="http://uri.etsi.org/01903/v1.3.2#" xmlns:etsi141="http://uri.etsi.org/01903/v1.4.1#"';
 
         const certificateNumber = getRandomNumber();
         const signatureNumber = getRandomNumber();
@@ -109,24 +109,17 @@ export async function signXml(
         signedProperties += "<etsi:SigningTime>";
         signedProperties += signingTime;
         signedProperties += "</etsi:SigningTime>";
-        signedProperties += "<etsi:SigningCertificate>";
-        signedProperties += "<etsi:Cert>";
-        signedProperties += "<etsi:CertDigest>";
+        signedProperties += "<etsi141:SigningCertificateV2>";
+        signedProperties += "<etsi141:Cert>";
+        signedProperties += "<etsi141:CertDigest>";
         signedProperties += '<ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"></ds:DigestMethod>';
-        signedProperties += "<ds:DigestValue>";
-        signedProperties += hash_certificateX509_der;
-        signedProperties += "</ds:DigestValue>";
-        signedProperties += "</etsi:CertDigest>";
-        signedProperties += "<etsi:IssuerSerial>";
-        signedProperties += "<ds:X509IssuerName>";
+        signedProperties += "<ds:DigestValue>" + hash_certificateX509_der + "</ds:DigestValue>";
+        signedProperties += "</etsi141:CertDigest>";
+        signedProperties += "<etsi141:IssuerSerialV2>";
         signedProperties += issuerName;
-        signedProperties += "</ds:X509IssuerName>";
-        signedProperties += "<ds:X509SerialNumber>";
-        signedProperties += certificateX509_serialNumber;
-        signedProperties += "</ds:X509SerialNumber>";
-        signedProperties += "</etsi:IssuerSerial>";
-        signedProperties += "</etsi:Cert>";
-        signedProperties += "</etsi:SigningCertificate>";
+        signedProperties += "</etsi141:IssuerSerialV2>";
+        signedProperties += "</etsi141:Cert>";
+        signedProperties += "</etsi141:SigningCertificateV2>";
         signedProperties += "</etsi:SignedSignatureProperties>";
         signedProperties += "<etsi:SignedDataObjectProperties>";
         signedProperties += `<etsi:DataObjectFormat ObjectReference="#Reference-ID-${referenceIdNumber}">`;
@@ -210,4 +203,3 @@ export async function signXml(
     }
 }
 
-    
