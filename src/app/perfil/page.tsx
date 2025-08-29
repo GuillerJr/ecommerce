@@ -19,6 +19,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+export const dynamic = 'force-dynamic';
+
 const navItems = [
     { href: '/pedidos', label: 'Mis Pedidos', icon: Package },
     { href: '/comprar-nuevamente', label: 'Comprar Nuevamente', icon: Repeat },

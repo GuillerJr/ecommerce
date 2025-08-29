@@ -21,6 +21,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Componente esqueleto para la cuadrícula de productos.
  * Muestra una animación de carga mientras se obtienen los datos.

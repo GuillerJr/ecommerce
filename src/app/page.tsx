@@ -11,8 +11,6 @@ import { getBrandsFromDb } from '@/lib/data/brands';
 import HomePageContentClient from '@/components/home/HomePageContentClient';
 import { Suspense } from 'react';
 
-export const dynamic = 'force-dynamic';
-
 /**
  * Componente de la página de inicio.
  * 

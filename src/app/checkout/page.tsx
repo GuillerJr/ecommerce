@@ -6,6 +6,8 @@
 import { getStoreConfigAction } from "@/lib/actions/store";
 import CheckoutPageClientWrapper from "@/components/checkout/CheckoutPageClientWrapper";
 
+export const dynamic = 'force-dynamic';
+
 export default async function CheckoutPage() {
     const configResult = await getStoreConfigAction();
     const storeConfig = configResult.success ? configResult.config : null;

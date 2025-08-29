@@ -23,6 +23,8 @@ import { addAddressAction, updateAddressAction, deleteAddressAction } from "@/li
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
+export const dynamic = 'force-dynamic';
+
 const addressSchema = z.object({
   name: z.string().min(2, "El nombre es muy corto."),
   address: z.string().min(5, "La dirección es muy corta."),

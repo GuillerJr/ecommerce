@@ -23,6 +23,8 @@ import { useToast } from '@/hooks/use-toast';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import ProductList from '@/components/products/ProductList';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Componente esqueleto para la cuadrícula de productos.
  * Muestra una animación de carga mientras se obtienen los datos.

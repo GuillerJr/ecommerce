@@ -13,6 +13,8 @@ import { getProductsAction } from "@/lib/actions/products";
 import type { Product } from "@/types";
 import Image from "next/image";
 
+export const dynamic = 'force-dynamic';
+
 export default function FavoritosPage() {
     const { user, loading } = useAuth();
     const router = useRouter();
