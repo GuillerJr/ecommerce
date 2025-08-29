@@ -17,6 +17,7 @@ export async function getStoreConfigFromDb(): Promise<StoreConfig> {
 
      return {
         ...row,
+        baseUrl: 'https://shop.hacktrickstore.com',
         address: { ...(row.address || {}), ruc: row.ruc }, // Correctly assign ruc to address object
         logoUrl: row.logoUrl || '',
         logoUrlDark: row.logoUrlDark || '',
