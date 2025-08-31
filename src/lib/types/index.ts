@@ -259,7 +259,7 @@ export type StoreConfig = {
     isEInvoicingEnabled: boolean;
     nextInvoiceNumber: number;
     eInvoicingEnvironment: '1' | '2';
-    contribuyenteRimpe?: "CONTRIBUYENTE NEGOCIO POPULAR - RÉGIMEN RIMPE" | "CONTRIBUYENTE RÉGIMEN RIMPE";
+    contribuyenteRimpe?: 'CONTRIBUYENTE NEGOCIO POPULAR - RÉGIMEN RIMPE' | 'CONTRIBUYENTE RÉGIMEN RIMPE' | 'none';
 };
 
 export type Giveaway = {
@@ -417,4 +417,12 @@ export type TournamentWithDetails = Tournament & {
   events: MatchEvent[];
   teamsCount?: number;
   approvedTeamsCount?: number;
+};
+
+export type Suggestion = {
+    id: string;
+    userId: string;
+    userName: string;
+    suggestion: string;
+    createdAt: string;
 };

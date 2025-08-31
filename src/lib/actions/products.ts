@@ -336,12 +336,13 @@ export async function generateProductsXlsxTemplate(): Promise<{ success: boolean
         
         worksheet.getRow(1).font = { bold: true };
         
+        // Example 1: By Stock
         worksheet.addRow({
-            nombre: 'Camiseta Ejemplo',
+            nombre: 'Camiseta de Equipo Ejemplo',
             descripcion_corta: 'Una camiseta de alta calidad para deportistas.',
             descripcion_larga: 'Diseñada con tecnología de punta para máximo confort y rendimiento, esta camiseta es ideal para cualquier actividad física.',
             precio: 29.99,
-            nombre_subcategoria: 'Uniformes de Fútbol',
+            nombre_subcategoria: 'Uniformes de Fútbol', // Corrected to a subcategory example
             nombre_marca: 'Nike',
             tipo_venta: 'stock',
             stock: 100,
@@ -351,21 +352,39 @@ export async function generateProductsXlsxTemplate(): Promise<{ success: boolean
             permitir_nombre_numero: true,
         });
 
-        worksheet.getCell('G2').dataValidation = {
+        // Example 2: On Demand
+        worksheet.addRow({
+            nombre: 'Gorra Personalizada Bajo Pedido',
+            descripcion_corta: 'Una gorra bordada con tu diseño, hecha bajo pedido.',
+            descripcion_larga: 'Crea tu propia gorra única. La fabricamos y enviamos una vez que realizas el pedido. Perfecta para equipos y eventos.',
+            precio: 19.99,
+            nombre_subcategoria: 'Gorras', // Example subcategory
+            nombre_marca: 'Adidas',
+            tipo_venta: 'on_demand',
+            stock: null, // Stock is not applicable for on_demand
+            tallas: 'Unitalla',
+            especificaciones: 'Material: Algodón\nTipo de Cierre: Ajustable',
+            permitir_parches: false,
+            permitir_nombre_numero: false,
+        });
+
+        // Data validation for type of sale
+        const tipoVentaCell = worksheet.getCell('G2');
+        tipoVentaCell.dataValidation = {
           type: 'list',
-          allowBlank: true,
+          allowBlank: false,
           formulae: ['"stock,on_demand"']
         };
-        worksheet.getCell('K2').dataValidation = {
-          type: 'list',
-          allowBlank: true,
-          formulae: ['"TRUE,FALSE"']
-        };
-        worksheet.getCell('L2').dataValidation = {
-          type: 'list',
-          allowBlank: true,
-          formulae: ['"TRUE,FALSE"']
-        };
+        tipoVentaCell.note = "Valores permitidos: stock, on_demand";
+
+        // Data validation for booleans
+        ['K2', 'L2'].forEach(cell => {
+             worksheet.getCell(cell).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: ['"TRUE,FALSE"']
+            };
+        });
 
         const buffer = await workbook.xlsx.writeBuffer();
         const base64 = Buffer.from(buffer).toString('base64');

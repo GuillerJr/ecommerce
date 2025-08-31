@@ -76,6 +76,7 @@ export default function Footer({ storeConfig }: { storeConfig: StoreConfig }) {
               <li><Link href="/nosotros" className="hover:text-primary">Sobre nosotros</Link></li>
               <li><Link href="/contacto" className="hover:text-primary">Contacto</Link></li>
               <li><Link href="/sorteos" className="hover:text-primary">Sorteos</Link></li>
+              <li><Link href="/sugerencias" className="hover:text-primary">Sugerencias</Link></li>
               <li><Link href="/torneos/eliminatoria" className="hover:text-primary">Torneos (Eliminatoria)</Link></li>
               <li><Link href="/torneos/liga" className="hover:text-primary">Torneos (Liga)</Link></li>
               <li><Link href="/torneos/grupos" className="hover:text-primary">Torneos (Grupos)</Link></li>

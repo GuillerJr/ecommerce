@@ -3,7 +3,6 @@
  * @fileoverview Archivo central de acciones del servidor para la aplicación.
  * Este archivo ha sido refactorizado para importar y re-exportar acciones
  * desde módulos más pequeños y específicos por dominio, ubicados en la carpeta `actions`.
- * Esto mejora la organización y mantenibilidad del código.
  */
 
 // Exportaciones de acciones de autenticación
@@ -44,3 +43,5 @@ export * from './actions/contact';
 export * from './actions/paypal';
 // Exportaciones de acciones de facturación electrónica
 export * from './actions/einvoice';
+// Exportaciones de acciones de sugerencias
+export * from './actions/suggestions';

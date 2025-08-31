@@ -1,3 +1,4 @@
+
 /**
  * @fileoverview Layout principal para todas las páginas del panel de administración.
  * Este layout gestiona la autenticación, la estructura de la barra lateral (sidebar)
@@ -11,7 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton, SidebarInset, SidebarFooter, SidebarTrigger } from '@/components/ui/sidebar';
-import { Home, Package, LayoutGrid, ListTree, Tag, Ticket, Users, Star, History, ClipboardList, Store, Gift, Info, Tablet, ShieldAlert, Boxes, Database, Award, UploadCloud, FileClock, UserCog, Trophy, ChevronDown, Archive, Sun, Moon } from 'lucide-react';
+import { Home, Package, LayoutGrid, ListTree, Tag, Ticket, Users, Star, History, ClipboardList, Store, Gift, Info, Tablet, ShieldAlert, Boxes, Database, Award, UploadCloud, FileClock, UserCog, Trophy, ChevronDown, Archive, Sun, Moon, Lightbulb } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -51,6 +52,7 @@ const navItems = [
     { href: '/admin/usuarios', label: 'Usuarios', icon: Users, permission: 'manage_users' },
     { href: '/admin/roles', label: 'Roles y Permisos', icon: UserCog, permission: 'manage_roles' },
     { href: '/admin/resenas', label: 'Reseñas', icon: Star, permission: 'manage_reviews' },
+    { href: '/admin/sugerencias', label: 'Sugerencias', icon: Lightbulb, permission: 'view_dashboard' }, // Assuming view_dashboard permission
     { href: '/admin/kardex', label: 'Kardex', icon: History, permission: 'view_kardex' },
     { href: '/admin/actividad', label: 'Actividad', icon: FileClock, permission: 'view_activity' },
     { href: '/admin/backup', label: 'Backup', icon: Database, permission: 'manage_backups' },

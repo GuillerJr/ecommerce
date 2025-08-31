@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -7,7 +8,7 @@ import type { User } from "@/types";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from 'next/link';
-import { User as UserIcon, MapPin, Heart, Package, Settings, ChevronRight, Edit, History, Repeat } from "lucide-react";
+import { User as UserIcon, MapPin, Heart, Package, Settings, ChevronRight, Edit, History, Repeat, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { useForm } from "react-hook-form";
@@ -27,6 +28,7 @@ const navItems = [
     { href: '/direcciones', label: 'Direcciones', icon: MapPin },
     { href: '/favoritos', label: 'Mis Favoritos', icon: Heart },
     { href: '/historial-busqueda', label: 'Vistos Recientemente', icon: History },
+    { href: '/sugerencias', label: 'Sugerencias', icon: Lightbulb },
     { href: '/configuracion', label: 'Configuración', icon: Settings },
 ];
 
