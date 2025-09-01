@@ -7,13 +7,14 @@ import {
     updateUserInDb, 
     addAddressToDb, 
     updateAddressInDb,
-    deleteAddressFromDb,
+    deleteAddressFromDb as deleteAddressFromDbInData,
     getUserById,
     addUserFromAdminToDb
 } from '@/lib/data/users';
 import { revalidatePath } from 'next/cache';
 import { getClient } from '../db.server';
 import { logActivity } from '../data/activity';
+import { getRoleById } from '../data/roles';
 
 export async function updateUserAction(user: User, adminUserId?: string) {
     try {
@@ -95,9 +96,9 @@ export async function updateAddressAction(userId: string, address: Address) {
     }
 }
 
-export async function deleteAddressAction(userId: string, addressId: string) {
+export async function deleteAddressFromDb(userId: string, addressId: string) {
     try {
-        const user = await deleteAddressFromDb(userId, addressId);
+        const user = await deleteAddressFromDbInData(userId, addressId);
         revalidatePath('/direcciones');
         revalidatePath('/checkout');
         return { success: true, user };
@@ -123,11 +124,13 @@ export async function addRecentlyViewedProductAction(userId: string, productId: 
     const row = res.rows[0];
      if (!row) return { success: false, message: 'Failed to update user' };
 
+    const role = await getRoleById(row.roleId);
+
     return {
         success: true,
         user: {
             ...row,
-            role: row.role_name || 'user',
+            role: role?.name || 'user',
         }
     };
 
