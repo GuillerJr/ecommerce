@@ -212,7 +212,7 @@ export default function PointOfSaleClient({ allProducts, allDiscounts }: PointOf
                                 const discountInfo = calculateDiscountedPrice(product, allDiscounts);
                                 return (
                                     <Card key={product.id} className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden group" onClick={() => addToCart(product)}>
-                                        <div className="aspect-square relative bg-secondary/50">
+                                        <div className="aspect-[4/5] relative bg-secondary/50">
                                             <Image src={product.image} alt={product.name} fill sizes="20vw" className="object-contain transition-transform group-hover:scale-105 p-1" />
                                             {discountInfo && (
                                                 <Badge variant="destructive" className="absolute top-2 left-2">OFERTA</Badge>

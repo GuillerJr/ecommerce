@@ -31,12 +31,12 @@ export default function CartItem({ item }: CartItemProps) {
   return (
     <div className="flex items-start gap-4">
       <Link href={`/product/${item.product.id}`} className="block flex-shrink-0">
-        <div className="aspect-square w-20 h-20 rounded-md overflow-hidden border bg-secondary/50">
+        <div className="aspect-[4/5] w-20 h-auto rounded-md overflow-hidden border bg-secondary/50 relative">
            <Image
             src={item.product.image}
             alt={item.product.name}
-            width={80}
-            height={80}
+            fill
+            sizes="20vw"
             className="object-contain"
           />
         </div>
