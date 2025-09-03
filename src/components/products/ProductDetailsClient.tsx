@@ -212,7 +212,7 @@ export default function ProductDetailsClient({
   return (
     <div className="grid md:grid-cols-2 gap-8 lg:gap-16">
       <div>
-        <div className="aspect-square rounded-lg overflow-hidden border mb-4 shadow-sm relative bg-secondary/50">
+        <div className="aspect-[4/5] rounded-lg overflow-hidden border mb-4 shadow-sm relative bg-secondary/50">
             <Image
                 src={mainImage}
                 alt={product.name}
