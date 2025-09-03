@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -30,13 +31,13 @@ export default function CartItem({ item }: CartItemProps) {
   return (
     <div className="flex items-start gap-4">
       <Link href={`/product/${item.product.id}`} className="block flex-shrink-0">
-        <div className="aspect-square w-20 h-20 rounded-md overflow-hidden border">
+        <div className="aspect-square w-20 h-20 rounded-md overflow-hidden border bg-secondary/50">
            <Image
             src={item.product.image}
             alt={item.product.name}
             width={80}
             height={80}
-            className="object-cover"
+            className="object-contain"
           />
         </div>
       </Link>

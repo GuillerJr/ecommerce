@@ -82,7 +82,7 @@ export default function GiveawaysPageClient({ initialGiveaways, allProducts, all
                         <h4 className="text-sm font-semibold mb-2">Premio:</h4>
                          {prizeProduct && (
                            <div className="flex items-start gap-4 rounded-lg border p-3 bg-muted/50">
-                                <Image src={prizeProduct.image} alt={prizeProduct.name} width={64} height={64} className="rounded-md border object-cover aspect-square" />
+                                <Image src={prizeProduct.image} alt={prizeProduct.name} width={64} height={64} className="rounded-md border object-contain aspect-square p-1 bg-secondary" />
                                 <div className="flex-1">
                                     <p className="font-medium text-sm leading-tight">{prizeProduct.name}</p>
                                     <p className="text-xs text-muted-foreground">Valorado en ${prizeProduct.price.toFixed(2)}</p>
@@ -161,7 +161,7 @@ export default function GiveawaysPageClient({ initialGiveaways, allProducts, all
                         <h4 className="text-sm font-semibold mb-2">Premio:</h4>
                          {prizeProduct && (
                            <div className="flex items-center gap-3">
-                                <Image src={prizeProduct.image} alt={prizeProduct.name} width={40} height={40} className="rounded-md border object-cover aspect-square" />
+                                <Image src={prizeProduct.image} alt={prizeProduct.name} width={40} height={40} className="rounded-md border object-contain aspect-square p-1 bg-secondary" />
                                 <p className="text-sm text-muted-foreground font-medium">{prizeProduct.name}</p>
                            </div>
                         )}

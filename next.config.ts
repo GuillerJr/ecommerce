@@ -35,6 +35,11 @@ const nextConfig: NextConfig = {
         source: '/robots.txt',
         destination: '/robots.txt',
       },
+       // This prevents conflicts with Next.js's internal dev routes
+      {
+        source: '/_next/webpack-hmr',
+        destination: '/_next/webpack-hmr',
+      },
     ];
   },
 };

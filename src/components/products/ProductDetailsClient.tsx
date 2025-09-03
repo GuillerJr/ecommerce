@@ -212,13 +212,13 @@ export default function ProductDetailsClient({
   return (
     <div className="grid md:grid-cols-2 gap-8 lg:gap-16">
       <div>
-        <div className="aspect-square rounded-lg overflow-hidden border mb-4 shadow-sm relative">
+        <div className="aspect-square rounded-lg overflow-hidden border mb-4 shadow-sm relative bg-secondary/50">
             <Image
                 src={mainImage}
                 alt={product.name}
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain p-4"
             />
         </div>
         <div className="grid grid-cols-5 gap-2">
@@ -228,7 +228,7 @@ export default function ProductDetailsClient({
               onClick={() => setMainImage(img)}
               className={`aspect-square rounded-md overflow-hidden border-2 transition-all ${mainImage === img ? 'border-primary shadow-md' : 'border-transparent opacity-70 hover:opacity-100'}`}
             >
-              <Image src={img} alt={`${product.name} thumbnail ${index + 1}`} width={150} height={150} className="object-cover w-full h-full" />
+              <Image src={img} alt={`${product.name} thumbnail ${index + 1}`} width={150} height={150} className="object-contain w-full h-full bg-secondary/50 p-1" />
             </button>
           ))}
         </div>
@@ -319,7 +319,7 @@ export default function ProductDetailsClient({
                      onChange={(e) => setCustomization(c => ({...c, notes: e.target.value}))}
                      placeholder={
                        customization.patches && !customization.nameAndNumber ? 'Ej: Parche de la Champions League' :
-                       !customization.patches && customization.nameAndNumber ? 'Ej: RONALDO / 7' :
+                       !customization.patches && custom.nameAndNumber ? 'Ej: RONALDO / 7' :
                        'Ej: Parche Champions League, Nombre: RONALDO, Dorsal: 7'
                      }
                      className="mt-1"

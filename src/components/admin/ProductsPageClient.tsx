@@ -211,7 +211,7 @@ export default function ProductsPageClient({ initialProducts, allCategories, all
                                 <TableCell className="hidden sm:table-cell">
                                     <Image
                                         alt={product.name}
-                                        className="aspect-square rounded-md object-cover"
+                                        className="aspect-square rounded-md object-contain p-1 bg-secondary/50"
                                         height="64"
                                         src={product.image}
                                         width="64"

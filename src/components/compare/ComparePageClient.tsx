@@ -78,8 +78,8 @@ export default function ComparePageClient({ allProducts, allBrands }: ComparePag
                         <div key={product.id} className="min-w-64 max-w-64 flex-shrink-0">
                            <div className="border rounded-lg overflow-hidden">
                                 <div className="relative">
-                                    <Link href={`/product/${product.id}`} className="aspect-square block">
-                                        <Image src={product.image} alt={product.name} fill sizes="33vw" className="object-cover" />
+                                    <Link href={`/product/${product.id}`} className="aspect-square block bg-secondary/50">
+                                        <Image src={product.image} alt={product.name} fill sizes="33vw" className="object-contain p-2" />
                                     </Link>
                                     <Button size="icon" variant="destructive" className="absolute top-2 right-2 h-7 w-7 z-10" onClick={() => removeFromComparison(product.id)}>
                                         <X className="h-4 w-4" />

@@ -47,7 +47,7 @@ function SortableImage({ id, src, onRemove }: { id: string; src: string; onRemov
     <div
       ref={setNodeRef}
       style={style}
-      className="relative group aspect-square"
+      className="relative group aspect-square bg-secondary/50 rounded-md"
     >
       <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing w-full h-full">
         <Image
@@ -55,7 +55,7 @@ function SortableImage({ id, src, onRemove }: { id: string; src: string; onRemov
           alt={`Vista previa`}
           fill
           sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-          className="rounded-md object-cover pointer-events-none"
+          className="rounded-md object-contain pointer-events-none p-1"
         />
       </div>
       <Button
@@ -567,5 +567,3 @@ export default function ProductForm({ product, onFormSubmit, categories, subcate
       </Form>
   );
 }
-
-    

@@ -213,8 +213,8 @@ export default function DashboardPageClient({ stats, recentOrders, topSellingPro
                     <CardContent className="grid gap-6">
                         {topSellingProducts.map(({ product, quantity }) => (
                             <div key={product.id} className="flex items-center gap-4">
-                                <Avatar className="hidden h-12 w-12 sm:flex rounded-md">
-                                    <AvatarImage src={product.image} alt={product.name} className="object-cover" />
+                                <Avatar className="hidden h-12 w-12 sm:flex rounded-md bg-secondary/50">
+                                    <AvatarImage src={product.image} alt={product.name} className="object-contain p-1" />
                                     <AvatarFallback>{product.name.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <div className="grid gap-1 flex-1 min-w-0">

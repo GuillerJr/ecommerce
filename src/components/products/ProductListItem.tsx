@@ -28,7 +28,7 @@ export default function ProductListItem({ product, activeDiscounts, brandName }:
             alt={product.name}
             width={120}
             height={120}
-            className="rounded-md object-cover aspect-square border w-full sm:w-[120px]"
+            className="rounded-md object-contain aspect-square border w-full sm:w-[120px] p-1 bg-secondary/50"
           />
         </Link>
         <div className="flex-1 grid gap-1 w-full">

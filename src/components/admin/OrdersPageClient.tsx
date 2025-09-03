@@ -425,7 +425,7 @@ export default function OrdersPageClient({ initialOrders, allProducts }: OrdersP
                                           if (!product) return null;
                                           return (
                                               <div key={`${item.productId}-${index}`} className="flex items-start gap-4">
-                                                  <Image src={product.image} alt={product.name} width={56} height={56} className="rounded-md border object-cover flex-shrink-0" />
+                                                  <Image src={product.image} alt={product.name} width={56} height={56} className="rounded-md border object-contain flex-shrink-0 p-1 bg-secondary/50" />
                                                   <div className="flex-1">
                                                       <p className="font-medium text-sm">{product.name}</p>
                                                       <p className="text-xs text-muted-foreground">

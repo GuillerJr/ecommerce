@@ -116,7 +116,7 @@ export default function ReviewsPageClient({ initialReviews }: ReviewsPageClientP
                                         <div className="flex items-center gap-3">
                                             <Image
                                                 alt={review.productName}
-                                                className="aspect-square rounded-md object-cover"
+                                                className="aspect-square rounded-md object-contain p-1 bg-secondary/50"
                                                 height="48"
                                                 src={review.productImage}
                                                 width="48"

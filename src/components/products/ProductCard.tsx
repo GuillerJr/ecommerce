@@ -35,13 +35,13 @@ export default function ProductCard({ product, discountInfo, brandName }: Produc
     <Card className="group flex h-full flex-col overflow-hidden rounded-lg border shadow-sm transition-all duration-300 hover:shadow-xl">
       <div className="relative overflow-hidden">
         <Link href={`/product/${product.id}`} className="absolute inset-0 z-0" aria-label={`Ver ${product.name}`} />
-        <div className="aspect-square">
+        <div className="aspect-square bg-secondary/50">
           <Image
             src={product.image || 'https://placehold.co/600x400.png'}
             alt={product.name}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-contain transition-transform duration-300 group-hover:scale-105 p-2"
           />
         </div>
         

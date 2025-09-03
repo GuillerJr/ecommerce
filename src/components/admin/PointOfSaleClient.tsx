@@ -212,8 +212,8 @@ export default function PointOfSaleClient({ allProducts, allDiscounts }: PointOf
                                 const discountInfo = calculateDiscountedPrice(product, allDiscounts);
                                 return (
                                     <Card key={product.id} className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden group" onClick={() => addToCart(product)}>
-                                        <div className="aspect-square relative">
-                                            <Image src={product.image} alt={product.name} fill sizes="20vw" className="object-cover transition-transform group-hover:scale-105" />
+                                        <div className="aspect-square relative bg-secondary/50">
+                                            <Image src={product.image} alt={product.name} fill sizes="20vw" className="object-contain transition-transform group-hover:scale-105 p-1" />
                                             {discountInfo && (
                                                 <Badge variant="destructive" className="absolute top-2 left-2">OFERTA</Badge>
                                             )}
@@ -283,7 +283,7 @@ export default function PointOfSaleClient({ allProducts, allDiscounts }: PointOf
                                     <div className="px-6 space-y-4">
                                         {cart.length > 0 ? cart.map(item => (
                                             <div key={item.id} className="flex items-center gap-3">
-                                                <Image src={item.product.image} alt={item.product.name} width={48} height={48} className="rounded-md border aspect-square object-cover" />
+                                                <Image src={item.product.image} alt={item.product.name} width={48} height={48} className="rounded-md border aspect-square object-contain p-1 bg-secondary/50" />
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-sm font-medium truncate">{item.product.name}</p>
                                                     <p className="text-xs text-muted-foreground">${item.price.toFixed(2)}</p>
