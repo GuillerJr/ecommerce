@@ -1,10 +1,11 @@
+
 'use server';
 
 import type { Backup } from '@/types';
 import { query } from '@/lib/db.server';
 
 export async function createSqlDumpFromDb(): Promise<{ filename: string; content: string }> {
-    // This is a simplified dump for demonstration. For a real backup, use pg_dump.
+    // Esta es una exportación simplificada para demostración. Para un backup real, usa pg_dump.
     const tablesToBackup = ['products', 'categories', 'subcategories', 'discounts', 'coupons', 'orders', 'users', 'roles', 'giveaways', 'kardex', 'store_config', 'nosotros_page', 'brands', 'activity_logs', 'tournaments', 'tournament_teams', 'tournament_players', 'matches', 'player_sanctions'];
     let sqlContent = '';
 

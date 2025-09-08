@@ -27,20 +27,19 @@ export default function SiteLayout({ children, storeConfig }: { children: ReactN
   const pathname = usePathname();
   const isAdminPage = pathname.startsWith('/admin');
 
-    if (isAdminPage) {
-      return <>{children}</>;
-    }
-
-    return (
-      <div className="relative flex min-h-screen flex-col">
-        <Header storeConfig={storeConfig} />
-        <main className="flex-1">
-          <Breadcrumbs />
-          {children}
-        </main>
-        <Footer storeConfig={storeConfig} />
-        <Toaster />
-      </div>
-    );
+  if (isAdminPage) {
+    return <>{children}</>;
   }
   
+  return (
+    <div className="relative flex min-h-screen flex-col">
+      <Header storeConfig={storeConfig} />
+      <main className="flex-1">
+        <Breadcrumbs />
+        {children}
+      </main>
+      <Footer storeConfig={storeConfig} />
+      <Toaster />
+    </div>
+  );
+}

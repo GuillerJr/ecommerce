@@ -63,20 +63,20 @@ export async function updateUserInDb(user: User): Promise<User | null> {
     const client = await getClient();
     try {
         await client.query('BEGIN');
-
+        
         const role = await client.query('SELECT permissions FROM roles WHERE id = $1', [roleId]);
         const permissions = role.rows[0]?.permissions || {};
 
         let queryFields = [
-            'name = $1', 'email = $2', 'identification = $3', 'phone = $4', '"roleId" = $5',
-            'status = $6', 'addresses = $7', 'cart = $8', '"resetPasswordToken" = $9',
-            '"resetPasswordExpires" = $10', '"verificationToken" = $11', '"verificationTokenExpires" = $12',
+            'name = $1', 'email = $2', 'identification = $3', 'phone = $4', '"roleId" = $5', 
+            'status = $6', 'addresses = $7', 'cart = $8', '"resetPasswordToken" = $9', 
+            '"resetPasswordExpires" = $10', '"verificationToken" = $11', '"verificationTokenExpires" = $12', 
             '"recentlyViewed" = $13', 'permissions = $14'
         ];
         let values: any[] = [
-            name, email, identification, JSON.stringify(phone), roleId, status,
-            JSON.stringify(addresses || []), JSON.stringify(cart || []), resetPasswordToken,
-            resetPasswordExpires, verificationToken, verificationTokenExpires,
+            name, email, identification, JSON.stringify(phone), roleId, status, 
+            JSON.stringify(addresses || []), JSON.stringify(cart || []), resetPasswordToken, 
+            resetPasswordExpires, verificationToken, verificationTokenExpires, 
             JSON.stringify(recentlyViewed || []), JSON.stringify(permissions || {})
         ];
 
@@ -85,17 +85,17 @@ export async function updateUserInDb(user: User): Promise<User | null> {
             queryFields.push('password = $' + (values.length + 1));
             values.push(password);
         }
-
+        
         values.push(id);
         const queryText = `UPDATE users SET ${queryFields.join(', ')} WHERE id = $${values.length} RETURNING *`;
-
+        
         const result = await client.query<any>(queryText, values);
-
+        
         await client.query('COMMIT');
-
+        
         const row = result.rows[0];
         if (!row) return null;
-
+        
         const updatedRole = await getRoleById(row.roleId);
         return {
             ...row,

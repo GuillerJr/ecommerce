@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -27,10 +28,10 @@ export default function BackupPageClient({ initialBackups }: BackupPageClientPro
             const result = await createBackupAction();
             
             if (result.success && result.content && result.filename) {
-                // Content is plain SQL text, create a Blob for it
+                // El contenido es texto SQL plano, se crea un Blob para él.
                 const blob = new Blob([result.content], { type: 'application/sql' });
                 
-                // Create a link and trigger download
+                // Crear un enlace y activar la descarga.
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -42,9 +43,9 @@ export default function BackupPageClient({ initialBackups }: BackupPageClientPro
                 
                 toast({
                     title: "Backup Creado y Descargado",
-                    description: `El archivo ${result.filename} ha sido generado.`,
+                    description: result.message,
                 });
-                // Refresh the page to show the new backup in the history
+                // Actualizar la página para mostrar el nuevo backup en el historial.
                 router.refresh();
             } else {
                 throw new Error(result.message || 'No se pudo crear el backup.');

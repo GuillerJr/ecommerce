@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -319,7 +320,7 @@ export default function ProductDetailsClient({
                      onChange={(e) => setCustomization(c => ({...c, notes: e.target.value}))}
                      placeholder={
                        customization.patches && !customization.nameAndNumber ? 'Ej: Parche de la Champions League' :
-                       !customization.patches && custom.nameAndNumber ? 'Ej: RONALDO / 7' :
+                       !customization.patches && customization.nameAndNumber ? 'Ej: RONALDO / 7' :
                        'Ej: Parche Champions League, Nombre: RONALDO, Dorsal: 7'
                      }
                      className="mt-1"
@@ -552,4 +553,3 @@ export default function ProductDetailsClient({
     </div>
   );
 }
-

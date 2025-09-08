@@ -10,6 +10,7 @@ import CartItem from './CartItem';
 import Link from 'next/link';
 import type { StoreConfig } from '@/types';
 import { useMemo } from 'react';
+import { ShoppingCart } from 'lucide-react';
 
 export default function CartSheet({ storeConfig }: { storeConfig: StoreConfig }) {
   const { cartItems, cartCount, totalPrice } = useCart();
@@ -26,18 +27,19 @@ export default function CartSheet({ storeConfig }: { storeConfig: StoreConfig })
       <SheetHeader className="px-6">
         <SheetTitle>Carrito de Compras ({cartCount})</SheetTitle>
       </SheetHeader>
-      <Separator />
+      
       {cartCount > 0 ? (
         <>
-          <ScrollArea className="flex-1">
-            <div className="flex flex-col gap-6 p-6">
-              {cartItems.map(item => (
-                <CartItem key={item.id} item={item} />
-              ))}
-            </div>
-          </ScrollArea>
-          <Separator />
-          <SheetFooter className="p-6">
+          <div className="flex-1 overflow-y-auto">
+            <ScrollArea className="h-full">
+              <div className="flex flex-col gap-6 p-6">
+                {cartItems.map(item => (
+                  <CartItem key={item.id} item={item} />
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+          <SheetFooter className="p-6 bg-secondary/50 border-t">
             <div className="w-full space-y-4">
                <div className="w-full space-y-2 text-sm">
                     <div className="flex justify-between">
@@ -65,7 +67,8 @@ export default function CartSheet({ storeConfig }: { storeConfig: StoreConfig })
       ) : (
         <div className="flex flex-1 items-center justify-center">
           <div className="text-center">
-            <h3 className="text-lg font-semibold">Tu carrito está vacío</h3>
+            <ShoppingCart className="mx-auto h-16 w-16 text-muted-foreground" />
+            <h3 className="text-lg font-semibold mt-4">Tu carrito está vacío</h3>
             <p className="text-sm text-muted-foreground mt-2">¡Añade algunos productos para empezar!</p>
             <Button asChild className="mt-4">
               <Link href="/tienda">Seguir Comprando</Link>

@@ -161,7 +161,7 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
     if (!signatureBuffer || signatureBuffer.length === 0) {
       throw new Error('El archivo de firma electrónica (.p12) está vacío.');
     }
-
+    
     const signedXml = await signXml(
       signatureBuffer,
       process.env.E_SIGNATURE_PASSWORD!,
@@ -171,7 +171,7 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
     if (typeof signedXml !== 'string' || !signedXml.trim()) {
       throw new Error('No se generó XML firmado (signedXml vacío).');
     }
-
+    
     // 3. Send to SRI
     const receptionResult = await documentReception(signedXml, sriUrls.reception);
     const receptionState = receptionResult?.RespuestaRecepcionComprobante?.estado;
@@ -210,7 +210,7 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
           authorization.numeroAutorizacion || resp?.claveAccesoConsultada || accessKey;
 
         await query('UPDATE orders SET "eInvoiceStatus" = $1, "eInvoiceAuthorization" = $2 WHERE id = $3', ['AUTHORIZED', authorizationNumber, orderId]);
-
+        
         // Fetch the latest config again before updating to avoid race conditions
         const latestStoreConfig = await getStoreConfigFromDb();
         await updateStoreConfigInDb({ ...latestStoreConfig, nextInvoiceNumber: latestStoreConfig.nextInvoiceNumber + 1 });

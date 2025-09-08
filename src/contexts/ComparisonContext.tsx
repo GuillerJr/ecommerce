@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
@@ -76,7 +77,7 @@ export const ComparisonProvider = ({ children }: { children: ReactNode }) => {
       return newIds || prevIds;
     });
     
-    // Call toast outside of the setState callback
+    // Llamar a toast fuera del callback de setState
     if (toastMessage) {
         toast(toastMessage);
     }

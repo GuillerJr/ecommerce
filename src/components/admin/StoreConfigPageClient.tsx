@@ -305,14 +305,14 @@ export default function StoreConfigPageClient({ initialConfig }: StoreConfigPage
                              <FormField control={form.control} name="currency.code" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Moneda</FormLabel>
-                                    <Select
+                                    <Select 
                                       onValueChange={(value) => {
                                         const selectedCurrency = currencies.find(c => c.code === value);
                                         if (selectedCurrency) {
                                           form.setValue('currency.code', selectedCurrency.code);
                                           form.setValue('currency.symbol', selectedCurrency.symbol);
                                         }
-                                      }}
+                                      }} 
                                       defaultValue={field.value}
                                     >
                                       <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>

@@ -10,31 +10,31 @@ const _getProductsFromDb = async (saleType?: 'stock' | 'on_demand'): Promise<Pro
     let queryText = 'SELECT * FROM products';
     const params = [];
 
-    // Base WHERE clause
+    // Cláusula WHERE base
     let whereClause = '';
     if (saleType) {
         whereClause = ' WHERE "saleType" = $1';
         params.push(saleType);
     }
-
+    
     queryText += whereClause;
 
-    // Advanced ordering:
-    // 1. Prioritize items with a season tag.
-    // 2. Sort by season descending (e.g., 2024-2025 before 2023-2024).
-    // 3. Sort by team name alphabetically within each season.
-    // 4. Sort by full name for products of the same team/season.
+    // Ordenamiento avanzado:
+    // 1. Prioriza los ítems que tienen una etiqueta de temporada.
+    // 2. Ordena por temporada descendente (ej. 2024-2025 antes que 2023-2024).
+    // 3. Ordena por nombre de equipo alfabéticamente dentro de cada temporada.
+    // 4. Ordena por nombre completo para productos del mismo equipo/temporada.
     queryText += `
         ORDER BY
-            CASE
+            CASE 
                 WHEN name ~ 'Temporada \\d{4}-\\d{4}' THEN 1
-                ELSE 2
+                ELSE 2 
             END,
             substring(name from 'Temporada (\\d{4}-\\d{4})') DESC,
             trim(substring(name from 'equipación(.*?)(Temporada|$)')) ASC,
             name ASC
     `;
-
+    
     const result = await query<any>(queryText, params);
     return result;
 }
@@ -103,9 +103,3 @@ export async function deleteProductFromDb(id: string): Promise<void> {
     const queryText = "UPDATE products SET status = 'Inactivo' WHERE id = $1";
     await query(queryText, [id]);
 }
-
-
-
-
-
-

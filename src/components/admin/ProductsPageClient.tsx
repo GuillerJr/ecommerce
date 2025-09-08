@@ -48,6 +48,14 @@ const ProductForm = dynamic(() => import('@/components/admin/ProductForm'), {
 
 const ITEMS_PER_PAGE = 10;
 
+// Helper function to normalize strings for accent-insensitive search
+const normalizeString = (str: string) => {
+    return str
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+};
+
 interface ProductsPageClientProps {
     initialProducts: Product[];
     allCategories: Category[];
@@ -95,8 +103,9 @@ export default function ProductsPageClient({ initialProducts, allCategories, all
     }, [searchTerm, categoryFilter, activeTab]);
 
     const filteredProducts = useMemo(() => {
+        const normalizedSearchTerm = normalizeString(searchTerm);
         return initialProducts.filter(product => {
-            const searchMatch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+            const searchMatch = normalizedSearchTerm === '' || normalizeString(product.name).includes(normalizedSearchTerm);
             const category = subIdToCategoryMap.get(product.subcategoryId);
             const categoryMatch = categoryFilter === 'all' || (category && category.id === categoryFilter);
             const statusMatch = (activeTab === 'active' ? product.status === 'Activo' : product.status === 'Inactivo');

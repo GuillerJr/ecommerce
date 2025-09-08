@@ -48,7 +48,7 @@ export async function signXml(
     xml = xml.replace(/(?<=\>)(\r?\n)|(\r?\n)(?=\<\/)/g, "");
     xml = xml.trim();
     xml = xml.replace(/(?<=\>)(\s*)/g, "");
-
+    
     try {
         const arrayUint8 = new Uint8Array(p12Data);
         const base64 = forge.util.binary.base64.encode(arrayUint8);
@@ -58,10 +58,10 @@ export async function signXml(
 
         const certBags = p12.getBags({ bagType: forge.pki.oids.certBag })[forge.pki.oids.certBag] || [];
         const keyBags  = p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag })[forge.pki.oids.pkcs8ShroudedKeyBag] || [];
-
+        
         if (!keyBags.length) throw new Error('No se encontró clave privada en el .p12');
         const key = keyBags[0].key!;
-
+        
         const signerCert = certBags.find(b => b.cert && b.cert.publicKey && b.cert.publicKey.n?.equals(key.n))?.cert
                         || certBags[0].cert;
 
@@ -70,11 +70,11 @@ export async function signXml(
         const chainCerts = certBags
             .map(b => b.cert)
             .filter(c => c && c !== signerCert); // resto de la cadena
-
+        
         const certificateX509_pem = forge.pki.certificateToAsn1(signerCert);
         const certificateX509_der = forge.asn1.toDer(certificateX509_pem).getBytes();
         const hash_certificateX509_der = sha256Base64(certificateX509_der, "binary");
-
+        
         const issuerName = signerCert.issuer.attributes
           .map(a => `${a.name?.toUpperCase().replace('ORGANIZATIONALUNITNAME','OU').replace('COUNTRYNAME','C').replace('ORGANIZATIONNAME','O').replace('COMMONNAME','CN')}=${a.value}`)
           .join(',');
@@ -100,9 +100,9 @@ export async function signXml(
         const referenceIdNumber = getRandomNumber();
         const signatureValueNumber = getRandomNumber();
         const objectNumber = getRandomNumber();
-
+        
         const signingTime = emissionDate.toISOString().slice(0, -5) + 'Z';
-
+        
         let signedProperties = "";
         signedProperties += `<etsi:SignedProperties Id="Signature${signatureNumber}-SignedProperties${signedPropertiesNumber}">`;
         signedProperties += "<etsi:SignedSignatureProperties>";
@@ -132,9 +132,9 @@ export async function signXml(
         signedProperties += "</etsi:DataObjectFormat>";
         signedProperties += "</etsi:SignedDataObjectProperties>";
         signedProperties += "</etsi:SignedProperties>";
-
+        
         const shaSignedProperties = sha256Base64(signedProperties.replace('<etsi:SignedProperties', `<etsi:SignedProperties ${nameSpaces}`), "utf8");
-
+        
         const chainPemList = chainCerts.map(c => {
           let pem = forge.pki.certificateToPem(c);
           pem = pem.substring(pem.indexOf("\n")+1, pem.indexOf("\n-----END CERTIFICATE-----"));
@@ -152,7 +152,7 @@ export async function signXml(
           `</ds:KeyInfo>`;
 
         const shaKeyInfo = sha256Base64(keyInfo.replace('<ds:KeyInfo', `<ds:KeyInfo ${nameSpaces}`), "utf8");
-
+        
         let signedInfo = "";
         signedInfo += `<ds:SignedInfo Id="Signature-SignedInfo${signedInfoNumber}">`;
         signedInfo += '<ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></ds:CanonicalizationMethod>';
@@ -194,12 +194,11 @@ export async function signXml(
         xadesBes += "</etsi:QualifyingProperties>";
         xadesBes += "</ds:Object>";
         xadesBes += "</ds:Signature>";
-
+        
         return xml.replace('</factura>', xadesBes + '</factura>');
-
+        
     } catch(e) {
-      console.error("Signing error:", e);
+      console.error("Error en la firma:", e);
       throw e;
     }
 }
-

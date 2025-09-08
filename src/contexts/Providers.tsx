@@ -32,6 +32,7 @@ export default function Providers({ children }: ProvidersProps) {
           <ComparisonProvider>
             <CartProvider>
               {children}
+              <Toaster />
             </CartProvider>
           </ComparisonProvider>
         </FavoritesProvider>

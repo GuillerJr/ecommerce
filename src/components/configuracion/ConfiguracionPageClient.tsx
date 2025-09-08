@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,15 +12,15 @@ import { useState, useEffect } from 'react';
 export default function ConfiguracionPageClient() {
   const [mounted, setMounted] = useState(false);
 
-  // This effect ensures the component only renders on the client,
-  // preventing hydration errors.
+  // Este efecto asegura que el componente solo se renderice en el cliente,
+  // previniendo errores de hidratación.
   useEffect(() => {
     setMounted(true);
   }, []);
 
   if (!mounted) {
-    // Render nothing on the server and during initial client render
-    // to prevent hydration mismatch. A skeleton could also be used here.
+    // No renderizar nada en el servidor y durante el renderizado inicial del cliente
+    // para prevenir la discordancia de hidratación. Aquí también se podría usar un esqueleto (skeleton).
     return null;
   }
 

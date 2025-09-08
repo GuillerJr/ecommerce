@@ -1,3 +1,4 @@
+
 /**
  * @fileoverview Contiene la función para consultar la autorización de un comprobante electrónico
  * en el web service del SRI.

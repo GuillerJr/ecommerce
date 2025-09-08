@@ -2,7 +2,7 @@
 
 'use client';
 
-import { ShoppingCart, Menu, User, Home, Store, Users, Mail, Search, LayoutDashboard, Settings, Package, LogOut, LogIn, Sun, Moon, GitCompareArrows, Globe } from 'lucide-react';
+import { ShoppingCart, Menu, User, Home, Store, Users, Mail, Search, LayoutDashboard, Settings, Package, LogOut, LogIn, Sun, Moon, GitCompareArrows, Globe, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import CartSheet from '@/components/cart/CartSheet';
@@ -96,6 +96,7 @@ export default function Header({ storeConfig }: { storeConfig: StoreConfig }) {
     { href: '/tienda', label: 'Tienda', icon: Store },
     { href: '/nosotros',label: 'Nosotros', icon: Users },
     { href: '/contacto', label: 'Contacto', icon: Mail },
+    { href: '/sugerencias', label: 'Sugerencias', icon: Lightbulb },
   ];
 
   const bottomNavLinks = [
@@ -103,6 +104,7 @@ export default function Header({ storeConfig }: { storeConfig: StoreConfig }) {
       { href: '/tienda', label: 'Tienda' },
       { href: '/nosotros', label: 'Nosotros' },
       { href: '/contacto', label: 'Contacto' },
+      { href: '/sugerencias', label: 'Sugerencias' },
   ];
   
   const BrandLogo = () => {

@@ -494,7 +494,7 @@ export default function ProductForm({ product, onFormSubmit, categories, subcate
                     multiple
                     accept="image/*"
                     className="h-auto"
-                    onClick={(e) => (e.currentTarget.value = '')} // Reset file input
+                    onClick={(e) => (e.currentTarget.value = '')} // Reiniciar el input de archivo
                     onChange={async (e) => {
                       if (e.target.files) {
                         const files = Array.from(e.target.files);

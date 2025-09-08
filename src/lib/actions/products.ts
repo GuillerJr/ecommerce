@@ -367,7 +367,7 @@ export async function generateProductsXlsxTemplate(): Promise<{ success: boolean
             permitir_parches: false,
             permitir_nombre_numero: false,
         });
-
+        
         // Data validation for type of sale
         const tipoVentaCell = worksheet.getCell('G2');
         tipoVentaCell.dataValidation = {

@@ -1,3 +1,4 @@
+
 /**
  * @fileoverview Contiene la función para enviar un comprobante electrónico para su recepción y validación
  * en el web service del SRI.
@@ -27,25 +28,23 @@ export async function documentReception(
      try {
         createClient(receptionUrl, (err, client: Client) => {
           if (err) {
-            console.error("SOAP Client Creation Error:", err.message);
+            console.error("Error al crear cliente SOAP:", err.message);
             return reject(new Error('Error al crear el cliente SOAP para recepción.'));
           }
           // Se llama al método 'validarComprobante' del servicio web.
           client.validarComprobante(params, (err: any, result: unknown) => {
             if (err) {
-              console.error("SOAP Call Error (validarComprobante):", err.body || err.message);
+              console.error("Error en llamada SOAP (validarComprobante):", err.body || err.message);
               return reject(new Error('Error en la llamada a validarComprobante.'));
             }
             resolve(result);
           });
         });
      } catch(clientError) {
-        console.error("SOAP Client Exception:", clientError);
+        console.error("Excepción en cliente SOAP:", clientError);
         reject(new Error('Excepción al crear el cliente SOAP para recepción.'));
      }
   });
 
   return await receptionRequest;
 }
-
-    

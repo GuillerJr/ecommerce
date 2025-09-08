@@ -86,7 +86,7 @@ export default function PedidosPageClient({ initialOrders, initialProducts }: Pe
   const getProductById = (id: string) => products.find(p => p.id === id);
   
   if (loading) {
-    return <div className="flex h-screen items-center justify-center">Cargando...</div>;
+    return <div className="flex h-dvh items-center justify-center">Cargando...</div>;
   }
 
   if (!user) {

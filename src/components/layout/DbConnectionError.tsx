@@ -39,7 +39,7 @@ export default function DbConnectionError() {
         `}</style>
       </head>
       <body>
-        <div className="flex h-screen w-full items-center justify-center bg-muted p-4">
+        <div className="flex h-dvh w-full items-center justify-center bg-muted p-4">
           <Card className="w-full max-w-md text-center">
             <CardHeader>
               <div className="mx-auto bg-destructive/10 text-destructive p-3 rounded-full w-fit">

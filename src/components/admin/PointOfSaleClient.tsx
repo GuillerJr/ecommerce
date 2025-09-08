@@ -183,7 +183,7 @@ export default function PointOfSaleClient({ allProducts, allDiscounts }: PointOf
 
 
   return (
-    <div className="flex h-[calc(100vh-theme(spacing.20))] flex-col p-4 md:p-8">
+    <div className="flex h-[calc(100dvh-theme(spacing.20))] flex-col p-4 md:p-8">
         <div className="flex items-center gap-3 mb-6">
             <div className="bg-secondary p-3 rounded-full border">
                 <Tablet className="h-6 w-6 text-muted-foreground" />

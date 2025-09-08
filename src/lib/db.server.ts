@@ -1,13 +1,14 @@
 
+
 import { Pool, types } from 'pg';
 import 'dotenv/config';
 
-// Ensure environment variables are not set
+// Asegurar que las variables de entorno no estén configuradas
 if (!process.env.DB_HOST) {
-    console.error("Database environment variables are not set. Please check your .env file.");
+    console.error("Las variables de entorno de la base de datos no están configuradas. Por favor, revisa tu archivo .env.");
 }
 
-// Convert NUMERIC types from string to float. This fixes ".toFixed is not a function" errors.
+// Convertir tipos NUMERIC de string a float. Esto soluciona errores de ".toFixed no es una función".
 types.setTypeParser(types.builtins.NUMERIC, (value: string) => {
     return parseFloat(value);
 });
@@ -21,11 +22,11 @@ const pool = new Pool({
 });
 
 pool.on('connect', () => {
-    console.log('🔗 Connected to the database');
+    console.log('🔗 Conectado a la base de datos');
 });
 
 pool.on('error', (err, client) => {
-  console.error('Unexpected error on idle client', err);
+  console.error('Error inesperado en un cliente inactivo', err);
   process.exit(-1);
 });
 
@@ -34,11 +35,11 @@ export const query = async <T>(text: string, params: any[] = []): Promise<T[]> =
   try {
     client = await pool.connect();
     const res = await client.query(text, params);
-    // This simple conversion might not be robust enough for all cases.
-    // A more comprehensive snake_case to camelCase converter might be needed.
+    // Esta conversión simple podría no ser lo suficientemente robusta para todos los casos.
+    // Podría ser necesario un conversor más completo de snake_case a camelCase.
     return res.rows as T[];
   } catch (error) {
-    console.error('Error executing query', { text, params, error });
+    console.error('Error al ejecutar la consulta', { text, params, error });
     throw error;
   } finally {
       if(client) {
@@ -57,7 +58,7 @@ export const checkDbConnection = async () => {
         client = await pool.connect();
         return { connected: true };
     } catch (error: any) {
-        console.error("Database connection failed:", error.message);
+        console.error("Falló la conexión a la base de datos:", error.message);
         return { connected: false, error: error.message };
     } finally {
         if (client) {

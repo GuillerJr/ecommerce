@@ -105,11 +105,11 @@ export async function getBreadcrumbData(pathname: string, searchParams: string):
         if (segment === 'product' && i < segments.length - 1) {
             const productId = segments[i + 1];
             const product = await getProductById(productId);
-            if (product) {
+            if (product && product.status === 'Activo') {
                 const category = await getCategoryBySubcategoryId(product.subcategoryId);
                 // Añadir 'Tienda' y 'Categoría' al breadcrumb
                 breadcrumbs.push({ label: 'Tienda', href: '/tienda' });
-                if (category) {
+                if (category && category.status === 'Activo') {
                     breadcrumbs.push({ label: category.name, href: `/tienda?category=${encodeURIComponent(category.name)}` });
                 }
                 label = product.name;

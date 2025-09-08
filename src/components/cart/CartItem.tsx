@@ -6,7 +6,7 @@ import Link from 'next/link';
 import type { CartItem } from '@/types';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
-import { Minus, Plus, X } from 'lucide-react';
+import { Minus, Plus, Trash2 } from 'lucide-react';
 
 interface CartItemProps {
   item: CartItem;
@@ -37,26 +37,34 @@ export default function CartItem({ item }: CartItemProps) {
             alt={item.product.name}
             fill
             sizes="20vw"
-            className="object-contain"
+            className="object-contain p-1"
           />
         </div>
       </Link>
       <div className="flex-1 flex flex-col">
         <div className="flex justify-between items-start">
-          <div>
-            <Link href={`/product/${item.product.id}`} className="font-semibold text-sm hover:underline line-clamp-2">
+          <div className="flex-1 min-w-0">
+            <Link href={`/product/${item.product.id}`} className="font-semibold text-sm hover:underline line-clamp-2 pr-2">
               {item.product.name}
             </Link>
              <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
                 {item.customization.size && <div>Talla: {item.customization.size}</div>}
                 {item.customization.patches && <div>+ Parches</div>}
                 {item.customization.nameAndNumber && <div>+ Nombre y Dorsal</div>}
-                {item.customization.notes && <div className="truncate" title={item.customization.notes}>Nota: {item.customization.notes}</div>}
+                {item.customization.notes && <div className="line-clamp-2" title={item.customization.notes}>Nota: {item.customization.notes}</div>}
              </div>
           </div>
-          <Button variant="ghost" size="icon" className="h-8 w-8 -mt-1 -mr-2 flex-shrink-0" onClick={() => removeFromCart(item.id)}>
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="text-right flex flex-col items-end">
+             {hasDiscount ? (
+                <>
+                  <p className="font-semibold text-sm text-destructive">${(item.price * item.quantity).toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground line-through">${(originalPriceWithCustomization * item.quantity).toFixed(2)}</p>
+                </>
+              ) : (
+                <p className="font-semibold text-sm">${(item.price * item.quantity).toFixed(2)}</p>
+              )}
+             {item.quantity > 1 && <p className="text-xs text-muted-foreground">${item.price.toFixed(2)} c/u</p>}
+          </div>
         </div>
 
         <div className="flex items-center justify-between mt-2">
@@ -69,17 +77,9 @@ export default function CartItem({ item }: CartItemProps) {
               <Plus className="w-3 h-3" />
             </Button>
           </div>
-          <div className="text-right">
-             {hasDiscount ? (
-                <>
-                  <p className="font-semibold text-sm text-destructive">${(item.price * item.quantity).toFixed(2)}</p>
-                  <p className="text-xs text-muted-foreground line-through">${(originalPriceWithCustomization * item.quantity).toFixed(2)}</p>
-                </>
-              ) : (
-                <p className="font-semibold text-sm">${(item.price * item.quantity).toFixed(2)}</p>
-              )}
-             {item.quantity > 1 && <p className="text-xs text-muted-foreground">${item.price.toFixed(2)} c/u</p>}
-          </div>
+          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive" onClick={() => removeFromCart(item.id)}>
+              <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </div>

@@ -459,6 +459,3 @@ export async function getMatchByIdFromDb(matchId: string): Promise<Match | null>
         return null;
     }
 }
-
-    
-

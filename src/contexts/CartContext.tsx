@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
@@ -47,7 +48,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
-  // Load cart from user object on login, or clear on logout
+  // Cargar el carrito desde el objeto de usuario al iniciar sesión, o limpiarlo al cerrar sesión
   useEffect(() => {
     if (user && !isCartInitialized) {
       setCartItems(user.cart || []);
@@ -58,12 +59,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user, isCartInitialized]);
 
-  // Save cart on change (debounced)
+  // Guardar el carrito en caso de cambios (con retardo)
   useEffect(() => {
     if (!isCartInitialized || !user) return;
 
     const handler = setTimeout(() => {
-      // Avoid updating if the cart hasn't changed from what's stored
+      // Evitar la actualización si el carrito no ha cambiado desde lo que está almacenado
       if (JSON.stringify(user.cart || []) === JSON.stringify(cartItems)) {
         return;
       }
@@ -74,7 +75,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           syncUser(result.user);
         }
       });
-    }, 1000); // Debounce for 1 second
+    }, 1000); // Retardo de 1 segundo
 
     return () => clearTimeout(handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps

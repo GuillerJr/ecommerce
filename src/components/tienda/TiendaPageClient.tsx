@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
@@ -13,6 +14,9 @@ import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, Pagi
 import React from 'react';
 import { Separator } from '@/components/ui/separator';
 import { calculateDiscountedPrice } from '@/lib/utils';
+import { Button } from '../ui/button';
+import { SearchX } from 'lucide-react';
+import Link from 'next/link';
 
 interface TiendaPageClientProps {
   allProducts: Product[];
@@ -24,6 +28,14 @@ interface TiendaPageClientProps {
 }
 
 const PRODUCTS_PER_PAGE = 12;
+
+// Helper function to normalize strings for accent-insensitive search
+const normalizeString = (str: string) => {
+    return str
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+};
 
 export default function TiendaPageClient({
   allProducts,
@@ -98,7 +110,7 @@ export default function TiendaPageClient({
       }
   };
 
-  const filteredAndSortedProducts = useMemo(() => {
+  const { filteredAndSortedProducts, categoryNotFound } = useMemo(() => {
     const subcategoryToCategoryMap = new Map<string, Category>();
     allSubcategories.forEach(sub => {
       const category = allCategories.find(c => c.id === sub.categoryId);
@@ -117,26 +129,43 @@ export default function TiendaPageClient({
     });
 
     let filtered = productsWithPrice;
+    let notFound = false;
+    
+    const normalizedSearchTerm = normalizeString(searchQuery);
 
     if (searchQuery) {
       filtered = filtered.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.description.toLowerCase().includes(searchQuery.toLowerCase())
+        normalizeString(p.name).includes(normalizedSearchTerm) ||
+        normalizeString(p.description).includes(normalizedSearchTerm)
       );
     }
 
     if (categoryQuery !== 'all') {
-      filtered = filtered.filter(p => {
-        const category = subcategoryToCategoryMap.get(p.subcategoryId);
-        return category?.name === categoryQuery;
-      });
+      const categoryExists = allCategories.some(c => c.name === categoryQuery);
+      if (!categoryExists) {
+          notFound = true;
+      } else {
+         filtered = filtered.filter(p => {
+            const category = subcategoryToCategoryMap.get(p.subcategoryId);
+            return category?.name === categoryQuery;
+          });
+      }
     }
 
-    if (subcategoryQuery !== 'all') {
-      filtered = filtered.filter(p => {
-        const subcategory = allSubcategories.find(s => s.id === p.subcategoryId);
-        return subcategory?.name === subcategoryQuery;
-      });
+    if (subcategoryQuery !== 'all' && !notFound) {
+      const subcategoryExists = allSubcategories.some(s => s.name === subcategoryQuery);
+       if (!subcategoryExists) {
+          notFound = true;
+      } else {
+        filtered = filtered.filter(p => {
+            const subcategory = allSubcategories.find(s => s.id === p.subcategoryId);
+            return subcategory?.name === subcategoryQuery;
+        });
+      }
+    }
+
+    if(notFound) {
+        return { filteredAndSortedProducts: [], categoryNotFound: true };
     }
 
     filtered = filtered.filter(p => p.effectivePrice >= priceRange[0] && p.effectivePrice <= priceRange[1]);
@@ -169,7 +198,7 @@ export default function TiendaPageClient({
         break;
     }
 
-    return sorted;
+    return { filteredAndSortedProducts: sorted, categoryNotFound: notFound };
   }, [searchQuery, categoryQuery, subcategoryQuery, priceRange, sortQuery, allProducts, allSubcategories, allCategories, availability, activeDiscounts]);
 
   const totalPages = Math.ceil(filteredAndSortedProducts.length / PRODUCTS_PER_PAGE);
@@ -185,18 +214,20 @@ export default function TiendaPageClient({
   };
 
   const pageTitle = useMemo(() => {
+    if (categoryNotFound) return 'Categoría no encontrada';
     if (pageType === 'ofertas') return 'Ofertas Especiales';
     if (categoryQuery !== 'all') return categoryQuery;
     if (subcategoryQuery !== 'all') return subcategoryQuery;
     if (searchQuery) return `Resultados para "${searchQuery}"`;
     return 'Nuestra Tienda';
-  }, [pageType, categoryQuery, subcategoryQuery, searchQuery]);
+  }, [pageType, categoryQuery, subcategoryQuery, searchQuery, categoryNotFound]);
 
   const pageDescription = useMemo(() => {
+      if (categoryNotFound) return 'La categoría que buscas no existe o no está disponible.';
       if (pageType === 'ofertas') return 'Aprovecha nuestros descuentos y promociones especiales.';
       if (searchQuery) return `Se encontraron ${filteredAndSortedProducts.length} productos.`;
       return 'Explora todos nuestros productos.';
-  }, [pageType, searchQuery, filteredAndSortedProducts.length]);
+  }, [pageType, searchQuery, filteredAndSortedProducts.length, categoryNotFound]);
 
   const renderPagination = () => {
     if (totalPages <= 1) return null;
@@ -266,65 +297,67 @@ export default function TiendaPageClient({
             </p>
         </section>
 
-        <div className="mb-8 border rounded-lg p-4">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-lg">Filtros y Ordenación</h3>
-            <p className="text-sm text-muted-foreground">
-              {filteredAndSortedProducts.length} resultados
-            </p>
-          </div>
-          <Separator />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-            {/* Price Filter */}
-            <div>
-              <Label className="text-base font-semibold">Rango de precios</Label>
-              <div className="flex justify-between text-sm pt-2">
-                <span>${localPriceRange[0]}</span>
-                <span>${localPriceRange[1]}</span>
-              </div>
-              <Slider
-                min={0}
-                max={maxPrice}
-                step={1}
-                value={localPriceRange}
-                onValueChange={setLocalPriceRange}
-                onValueCommit={handlePriceCommit}
-                className="mt-2"
-              />
+        {!categoryNotFound && (
+            <div className="mb-8 border rounded-lg p-4">
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="font-semibold text-lg">Filtros y Ordenación</h3>
+                <p className="text-sm text-muted-foreground">
+                {filteredAndSortedProducts.length} resultados
+                </p>
             </div>
-
-            {/* Availability Filter */}
-            <div>
-              <Label className="text-base font-semibold">Disponibilidad</Label>
-              <div className="space-y-2 pt-3">
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="filter-inStock" checked={availability.inStock} onCheckedChange={(checked) => handleAvailabilityChange('inStock', checked as boolean)} />
-                  <Label htmlFor="filter-inStock" className="text-sm font-normal">En Stock</Label>
+            <Separator />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+                {/* Price Filter */}
+                <div>
+                <Label className="text-base font-semibold">Rango de precios</Label>
+                <div className="flex justify-between text-sm pt-2">
+                    <span>${localPriceRange[0]}</span>
+                    <span>${localPriceRange[1]}</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="filter-onDemand" checked={availability.onDemand} onCheckedChange={(checked) => handleAvailabilityChange('onDemand', checked as boolean)} />
-                  <Label htmlFor="filter-onDemand" className="text-sm font-normal">Bajo Pedido</Label>
+                <Slider
+                    min={0}
+                    max={maxPrice}
+                    step={1}
+                    value={localPriceRange}
+                    onValueChange={setLocalPriceRange}
+                    onValueCommit={handlePriceCommit}
+                    className="mt-2"
+                />
                 </div>
-              </div>
-            </div>
 
-            {/* Sort Order */}
-            <div>
-              <Label className="text-base font-semibold">Ordenar por</Label>
-              <Select value={sortQuery} onValueChange={(value) => updateFilters({ sort: value })}>
-                <SelectTrigger className="w-full mt-2">
-                  <SelectValue placeholder="Ordenar por" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="relevance">Relevancia</SelectItem>
-                  <SelectItem value="price_asc">Precio: Bajo a Alto</SelectItem>
-                  <SelectItem value="price_desc">Precio: Alto a Bajo</SelectItem>
-                  <SelectItem value="rating_desc">Mejor Valorados</SelectItem>
-                </SelectContent>
-              </Select>
+                {/* Availability Filter */}
+                <div>
+                <Label className="text-base font-semibold">Disponibilidad</Label>
+                <div className="space-y-2 pt-3">
+                    <div className="flex items-center space-x-2">
+                    <Checkbox id="filter-inStock" checked={availability.inStock} onCheckedChange={(checked) => handleAvailabilityChange('inStock', checked as boolean)} />
+                    <Label htmlFor="filter-inStock" className="text-sm font-normal">En Stock</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                    <Checkbox id="filter-onDemand" checked={availability.onDemand} onCheckedChange={(checked) => handleAvailabilityChange('onDemand', checked as boolean)} />
+                    <Label htmlFor="filter-onDemand" className="text-sm font-normal">Bajo Pedido</Label>
+                    </div>
+                </div>
+                </div>
+
+                {/* Sort Order */}
+                <div>
+                <Label className="text-base font-semibold">Ordenar por</Label>
+                <Select value={sortQuery} onValueChange={(value) => updateFilters({ sort: value })}>
+                    <SelectTrigger className="w-full mt-2">
+                    <SelectValue placeholder="Ordenar por" />
+                    </SelectTrigger>
+                    <SelectContent>
+                    <SelectItem value="relevance">Relevancia</SelectItem>
+                    <SelectItem value="price_asc">Precio: Bajo a Alto</SelectItem>
+                    <SelectItem value="price_desc">Precio: Alto a Bajo</SelectItem>
+                    <SelectItem value="rating_desc">Mejor Valorados</SelectItem>
+                    </SelectContent>
+                </Select>
+                </div>
             </div>
-          </div>
-        </div>
+            </div>
+        )}
 
         <main>
             {filteredAndSortedProducts.length > 0 ? (
@@ -347,8 +380,17 @@ export default function TiendaPageClient({
                 </Pagination>
             </>
             ) : (
-            <div className="text-center py-16">
-                <p className="text-lg text-muted-foreground">No se encontraron productos. Intenta ajustar tu búsqueda o filtros.</p>
+            <div className="text-center py-16 border-2 border-dashed rounded-lg">
+                <SearchX className="mx-auto h-12 w-12 text-muted-foreground" />
+                 <h3 className="mt-4 text-xl font-semibold">
+                    {categoryNotFound ? 'Categoría no encontrada' : 'No se encontraron productos'}
+                </h3>
+                <p className="mt-2 text-muted-foreground">
+                    {categoryNotFound ? 'La categoría que buscas no existe o fue desactivada.' : 'Intenta ajustar tu búsqueda o filtros.'}
+                </p>
+                <Button asChild className="mt-6">
+                    <Link href="/tienda">Volver a la tienda</Link>
+                </Button>
             </div>
             )}
         </main>
