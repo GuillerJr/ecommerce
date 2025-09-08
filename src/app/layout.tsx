@@ -43,6 +43,9 @@ export async function generateMetadata(): Promise<Metadata> {
           template: `%s | ${storeConfig.name}`,
         },
         description: storeConfig.description,
+        icons: {
+          icon: '/favicon.ico',
+        },
       };
     }
   } catch (error) {
@@ -50,8 +53,11 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 
   return {
-    title: "HackTrickStore",
+    title: "Coral Cart",
     description: "Tu tienda de equipamiento deportivo de alto rendimiento.",
+    icons: {
+      icon: '/favicon.ico',
+    },
   };
 }
 
@@ -75,9 +81,6 @@ export default async function RootLayout({
 
   return (
     <html lang="es" suppressHydrationWarning>
-       <head>
-        <link rel="icon" href="/assets/logo.png" sizes="any" />
-      </head>
       <body className={cn("min-h-screen bg-background font-body antialiased", inter.variable, spaceGrotesk.variable)} suppressHydrationWarning>
         <Providers>
             <SiteLayout storeConfig={storeConfig}>

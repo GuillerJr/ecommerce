@@ -10,10 +10,8 @@ import { ChevronLeft } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
-export default async function ManageMatchPage(
-  { params }: { params: Promise<{ id: string; matchId: string }> } // ✅ params como Promise
-) {
-  const { id: tournamentId, matchId } = await params; // ✅ esperar antes de usar
+export default async function ManageMatchPage({ params }: { params: { id: string; matchId: string } }) {
+  const { id: tournamentId, matchId } = params;
 
   const matchResult = await getMatchByIdAction(matchId);
     if (!matchResult.success || !matchResult.match) {
@@ -47,4 +45,4 @@ export default async function ManageMatchPage(
       </div>
     );
   }
-  
+    

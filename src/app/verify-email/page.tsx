@@ -70,7 +70,7 @@ function VerificationStatus() {
 
 export default function VerifyEmailPage() {
   return (
-    <div className="container mx-auto flex min-h-[calc(100vh-200px)] items-center justify-center p-4">
+    <div className="container mx-auto flex min-h-[calc(100dvh-200px)] items-center justify-center p-4">
       <Suspense fallback={<Card className="w-full max-w-md p-8 text-center"><Loader2 className="mx-auto h-12 w-12 animate-spin" /></Card>}>
         <VerificationStatus />
       </Suspense>

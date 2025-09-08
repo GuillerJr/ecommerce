@@ -33,7 +33,7 @@ export default async function Home() {
 
   return (
     // Suspense muestra un estado de carga mientras se obtienen los datos.
-    <Suspense fallback={<div className="flex justify-center items-center h-screen">Cargando...</div>}>
+    <Suspense fallback={<div className="flex justify-center items-center h-dvh">Cargando...</div>}>
       {/* Pasa los datos obtenidos al componente cliente que se encargará de la renderización. */}
       <HomePageContentClient 
         allProducts={allProducts} 

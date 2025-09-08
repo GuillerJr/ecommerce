@@ -6,7 +6,7 @@ import Link from 'next/link'
 
 export default function NotFound() {
   return (
-    <div className="container mx-auto flex min-h-[calc(100vh-200px)] items-center justify-center px-4 sm:px-6 lg:px-8 py-8">
+    <div className="container mx-auto flex min-h-[calc(100dvh-200px)] items-center justify-center px-4 sm:px-6 lg:px-8 py-8">
       <Card className="w-full max-w-lg text-center">
         <CardHeader>
             <div className="mx-auto bg-secondary p-4 rounded-full w-fit">

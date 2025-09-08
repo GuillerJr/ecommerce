@@ -56,7 +56,7 @@ export default function SugerenciasPage() {
             });
         }
     };
-
+    
     if (loading || !user) {
         return <div className="flex h-screen items-center justify-center">Cargando...</div>;
     }

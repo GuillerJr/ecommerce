@@ -9,10 +9,8 @@ import TournamentPublicDetailPage from '@/components/tournaments/TournamentPubli
 
 export const dynamic = 'force-dynamic';
 
-export default async function TournamentDetailPage(
-  { params }: { params: Promise<{ id: string }> } // ✅ Declaramos como Promise
-) {
-  const { id } = await params; // ✅ Esperamos params antes de usarlo
+export default async function TournamentDetailPage({ params }: { params: { id: string } }) {
+  const { id } = params;
 
   const tournament = await getTournamentDetails(id);
   const users = await getUsers();
@@ -25,3 +23,4 @@ export default async function TournamentDetailPage(
     <TournamentPublicDetailPage initialTournament={tournament} allUsers={users} />
   );
 }
+    

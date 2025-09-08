@@ -67,7 +67,7 @@ export default function DireccionesPage() {
 
 
     if (loading || !user) {
-        return <div className="flex h-screen items-center justify-center">Cargando...</div>;
+        return <div className="flex h-dvh items-center justify-center">Cargando...</div>;
     }
 
     const handleFormSubmit = async (values: AddressFormValues) => {

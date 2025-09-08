@@ -11,10 +11,8 @@ import TournamentMatchesPageClient from "@/components/admin/tournaments/Tourname
 
 export const dynamic = 'force-dynamic';
 
-export default async function TournamentMatchesPage(
-  { params }: { params: Promise<{ id: string }> } // 👈 params ahora es Promise
-) {
-  const { id } = await params; // 👈 esperamos antes de usarlo
+export default async function TournamentMatchesPage({ params }: { params: { id: string } }) {
+  const { id } = params;
     const tournament = await getTournamentDetails(id);
   
     if (!tournament) {
@@ -39,4 +37,4 @@ export default async function TournamentMatchesPage(
       </div>
     );
   }
-  
+    

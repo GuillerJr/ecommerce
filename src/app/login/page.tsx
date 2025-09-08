@@ -87,11 +87,11 @@ export default function LoginPage() {
 
   // Muestra un estado de carga mientras se verifica la sesión.
   if (authLoading || user) {
-    return <div className="flex h-screen items-center justify-center">Cargando...</div>;
+    return <div className="flex h-dvh items-center justify-center">Cargando...</div>;
   }
 
   return (
-    <div className="container mx-auto flex items-center justify-center min-h-[calc(100vh-200px)] px-4 sm:px-6 lg:px-8">
+    <div className="container mx-auto flex items-center justify-center min-h-[calc(100dvh-200px)] px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>

@@ -138,7 +138,7 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <div className="container mx-auto flex items-center justify-center min-h-[calc(100vh-200px)] px-4 sm:px-6 lg:px-8">
+    <div className="container mx-auto flex items-center justify-center min-h-[calc(100dvh-200px)] px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl">Crear Nueva Contraseña</CardTitle>

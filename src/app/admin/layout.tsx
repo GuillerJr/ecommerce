@@ -24,6 +24,7 @@ import AdminBreadcrumbs from '@/components/admin/AdminBreadcrumbs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
+import { Toaster } from '@/components/ui/toaster';
 
 // Definición de las secciones y sus permisos requeridos
 const navItems = [
@@ -83,12 +84,12 @@ function AdminLayoutClient({ children }: { children: React.ReactNode }) {
     }, []);
 
     if (loading) {
-        return <div className="flex h-screen items-center justify-center">Verificando acceso...</div>;
+        return <div className="flex h-dvh items-center justify-center">Verificando acceso...</div>;
     }
 
     if (!user || user.role === 'user') {
         return (
-            <div className="flex h-screen items-center justify-center bg-muted p-4">
+            <div className="flex h-dvh items-center justify-center bg-muted p-4">
                 <Card className="w-full max-w-md text-center">
                     <CardHeader>
                         <div className="mx-auto bg-destructive/10 text-destructive p-3 rounded-full w-fit">
@@ -121,7 +122,7 @@ function AdminLayoutClient({ children }: { children: React.ReactNode }) {
 
     if (!hasAccessToCurrentPage) {
         return (
-             <div className="flex h-screen items-center justify-center bg-muted p-4">
+             <div className="flex h-dvh items-center justify-center bg-muted p-4">
                 <Card className="w-full max-w-md text-center">
                     <CardHeader>
                         <div className="mx-auto bg-destructive/10 text-destructive p-3 rounded-full w-fit">
@@ -236,6 +237,7 @@ function AdminLayoutClient({ children }: { children: React.ReactNode }) {
                     </div>
                 </header>
                 {children}
+                 <Toaster />
             </SidebarInset>
         </SidebarProvider>
     )

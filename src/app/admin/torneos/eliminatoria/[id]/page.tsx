@@ -16,10 +16,8 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
-export default async function ManageTournamentPage(
-  { params }: { params: Promise<{ id: string }> } // 👈 params ahora es Promise
-) {
-  const { id } = await params; // 👈 esperamos params antes de usarlo
+export default async function ManageTournamentPage({ params }: { params: { id: string } }) {
+  const { id } = params; 
 
   const tournament = await getTournamentDetails(id);
   if (!tournament) {
@@ -84,4 +82,4 @@ export default async function ManageTournamentPage(
       </div>
     );
   }
-  
+    

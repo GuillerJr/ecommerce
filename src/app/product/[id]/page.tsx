@@ -23,7 +23,7 @@ export async function generateMetadata(
   const { id } = await params;
   const product = await getProductById(id);
 
-  if (!product) {
+  if (!product || product.status !== 'Activo') {
     return { title: 'Producto no encontrado' };
   }
 
@@ -41,7 +41,7 @@ function ProductDetailsSkeleton() {
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
       <div className="grid md:grid-cols-2 gap-8 lg:gap-16">
         <div>
-          <Skeleton className="aspect-square rounded-lg" />
+          <Skeleton className="aspect-[4/5] rounded-lg" />
           <div className="grid grid-cols-5 gap-2 mt-4">
             {[...Array(4)].map((_, i) => (
               <Skeleton key={i} className="aspect-square rounded-md" />
