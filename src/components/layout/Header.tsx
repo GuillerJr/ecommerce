@@ -44,6 +44,7 @@ export default function Header({ storeConfig }: { storeConfig: StoreConfig }) {
   const { cartCount } = useCart();
   const { comparisonIds } = useComparison();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [isCartOpen, setIsCartOpen] = React.useState(false);
   const { setTheme, resolvedTheme } = useTheme();
   
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -84,7 +85,6 @@ export default function Header({ storeConfig }: { storeConfig: StoreConfig }) {
     const newUrl = updateSearchParams(searchParams, {
         q: searchQuery,
         category: searchCategory,
-        page: '1' // Siempre reiniciar a la página 1 en una nueva búsqueda
     });
     router.push(`/tienda?${newUrl}`);
     if (isMobileMenuOpen) setIsMobileMenuOpen(false);
@@ -231,7 +231,7 @@ export default function Header({ storeConfig }: { storeConfig: StoreConfig }) {
               </DropdownMenuContent>
             </DropdownMenu>
 
-             <Sheet>
+             <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
                 <SheetTrigger asChild>
                     <Button variant="ghost" className="p-2 h-auto text-current hover:bg-accent hover:text-accent-foreground rounded-md flex items-center gap-2">
                         <div className="relative">
@@ -248,7 +248,7 @@ export default function Header({ storeConfig }: { storeConfig: StoreConfig }) {
                         <span className="font-bold text-sm hidden lg:block">Carrito</span>
                     </Button>
                 </SheetTrigger>
-                <CartSheet storeConfig={storeConfig} />
+                <CartSheet storeConfig={storeConfig} setSheetOpen={setIsCartOpen} />
             </Sheet>
           </div>
         </div>

@@ -320,7 +320,7 @@ export default function ProductDetailsClient({
                      onChange={(e) => setCustomization(c => ({...c, notes: e.target.value}))}
                      placeholder={
                        customization.patches && !customization.nameAndNumber ? 'Ej: Parche de la Champions League' :
-                       !customization.patches && custom.nameAndNumber ? 'Ej: RONALDO / 7' :
+                       !customization.patches && customization.nameAndNumber ? 'Ej: RONALDO / 7' :
                        'Ej: Parche Champions League, Nombre: RONALDO, Dorsal: 7'
                      }
                      className="mt-1"
@@ -348,86 +348,88 @@ export default function ProductDetailsClient({
         </div>
         
         <Card className="bg-secondary/50 border-dashed">
-            <CardContent className="pt-6 flex flex-col gap-4">
-                 {isOutOfStock ? (
-                    <Button size="lg" className="w-full" disabled>
-                        <Bell className="mr-2 h-5 w-5" />
-                        Próximamente disponible
-                    </Button>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-[auto,1fr] gap-4">
-                        <div className="flex items-center border rounded-md bg-background">
-                            <Button variant="ghost" size="icon" className="h-12" onClick={() => setQuantity(q => Math.max(1, q - 1))}>
-                                <Minus className="w-4 h-4" />
-                            </Button>
-                            <span className="w-12 text-center font-bold">{quantity}</span>
-                            <Button variant="ghost" size="icon" className="h-12" onClick={() => setQuantity(q => q + 1)}>
-                                <Plus className="w-4 h-4" />
+            <CardContent className="pt-6">
+                <div className="flex flex-col gap-4">
+                    {isOutOfStock ? (
+                        <Button size="lg" className="w-full" disabled>
+                            <Bell className="mr-2 h-5 w-5" />
+                            Próximamente disponible
+                        </Button>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-[auto,1fr] gap-4">
+                            <div className="flex items-center border rounded-md bg-background">
+                                <Button variant="ghost" size="icon" className="h-12" onClick={() => setQuantity(q => Math.max(1, q - 1))}>
+                                    <Minus className="w-4 h-4" />
+                                </Button>
+                                <span className="w-12 text-center font-bold">{quantity}</span>
+                                <Button variant="ghost" size="icon" className="h-12" onClick={() => setQuantity(q => q + 1)}>
+                                    <Plus className="w-4 h-4" />
+                                </Button>
+                            </div>
+                            <Button size="lg" className="w-full shadow-lg hover:shadow-primary/30" onClick={handleAddToCart} disabled={isAddToCartDisabled}>
+                                <ShoppingCart className="mr-2 h-5 w-5" /> Añadir al Carrito
                             </Button>
                         </div>
-                        <Button size="lg" className="w-full shadow-lg hover:shadow-primary/30" onClick={handleAddToCart} disabled={isAddToCartDisabled}>
-                            <ShoppingCart className="mr-2 h-5 w-5" /> Añadir al Carrito
+                    )}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Button size="lg" variant="outline" className="w-full" onClick={() => toggleFavorite(product.id, product.name)} disabled={isFavoritesLoading}>
+                            <Heart className={cn("mr-2 h-5 w-5 transition-all", isActuallyFavorite ? "text-red-500 fill-red-500" : "text-foreground")} />
+                            <span>{isActuallyFavorite ? 'En Favoritos' : 'Favorito'}</span>
                         </Button>
-                    </div>
-                )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Button size="lg" variant="outline" className="w-full" onClick={() => toggleFavorite(product.id, product.name)} disabled={isFavoritesLoading}>
-                        <Heart className={cn("mr-2 h-5 w-5 transition-all", isActuallyFavorite ? "text-red-500 fill-red-500" : "text-foreground")} />
-                        <span>{isActuallyFavorite ? 'En Favoritos' : 'Favorito'}</span>
-                    </Button>
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button size="lg" variant="outline" className="w-full">
-                                <Share2 className="mr-2 h-5 w-5" />
-                                <span>Compartir</span>
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
-                            <DialogHeader>
-                                <DialogTitle>Compartir Producto</DialogTitle>
-                                <DialogDescription>
-                                    Cualquiera con un smartphone puede escanear este código.
-                                </DialogDescription>
-                            </DialogHeader>
-                             <div className="space-y-4 py-4">
-                                <div className="p-6 bg-muted/50 rounded-lg border-2 border-dashed flex flex-col items-center justify-center">
-                                    <div className="p-4 bg-white rounded-lg shadow-md">
-                                        <QRCodeCanvas
-                                            value={productUrl}
-                                            size={256}
-                                            bgColor={"#ffffff"}
-                                            fgColor={"#000000"}
-                                            level={"H"}
-                                            includeMargin={true}
-                                        />
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button size="lg" variant="outline" className="w-full">
+                                    <Share2 className="mr-2 h-5 w-5" />
+                                    <span>Compartir</span>
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-md">
+                                <DialogHeader>
+                                    <DialogTitle>Compartir Producto</DialogTitle>
+                                    <DialogDescription>
+                                        Cualquiera con un smartphone puede escanear este código.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                 <div className="space-y-4 py-4">
+                                    <div className="p-6 bg-muted/50 rounded-lg border-2 border-dashed flex flex-col items-center justify-center">
+                                        <div className="p-4 bg-white rounded-lg shadow-md">
+                                            <QRCodeCanvas
+                                                value={productUrl}
+                                                size={256}
+                                                bgColor={"#ffffff"}
+                                                fgColor={"#000000"}
+                                                level={"H"}
+                                                includeMargin={true}
+                                            />
+                                        </div>
+                                        <p className="text-sm text-muted-foreground mt-4 font-semibold">Escanea para compartir</p>
                                     </div>
-                                    <p className="text-sm text-muted-foreground mt-4 font-semibold">Escanea para compartir</p>
+                                     <div className="flex w-full items-center space-x-2">
+                                        <Input value={productUrl} readOnly className="flex-1" />
+                                        <Button type="button" size="icon" onClick={handleCopyLink}>
+                                            <Copy className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                    <Separator className="my-4" />
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <Button asChild variant="outline">
+                                            <a href={facebookShareUrl} target="_blank" rel="noopener noreferrer"><FaFacebookF className="mr-2"/>Facebook</a>
+                                        </Button>
+                                        <Button asChild variant="outline">
+                                            <a href={twitterShareUrl} target="_blank" rel="noopener noreferrer"><FaXTwitter className="mr-2"/>Twitter</a>
+                                        </Button>
+                                        <Button asChild variant="outline">
+                                            <a href={whatsappShareUrl} target="_blank" rel="noopener noreferrer"><FaWhatsapp className="mr-2"/>WhatsApp</a>
+                                        </Button>
+                                        <Button variant="outline" onClick={handleCopyLink}>
+                                            <FaInstagram className="mr-2" />
+                                            <span>Instagram</span>
+                                        </Button>
+                                    </div>
                                 </div>
-                                 <div className="flex w-full items-center space-x-2">
-                                    <Input value={productUrl} readOnly className="flex-1" />
-                                    <Button type="button" size="icon" onClick={handleCopyLink}>
-                                        <Copy className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                                <Separator className="my-4" />
-                                <div className="grid grid-cols-2 gap-2">
-                                    <Button asChild variant="outline">
-                                        <a href={facebookShareUrl} target="_blank" rel="noopener noreferrer"><FaFacebookF className="mr-2"/>Facebook</a>
-                                    </Button>
-                                    <Button asChild variant="outline">
-                                        <a href={twitterShareUrl} target="_blank" rel="noopener noreferrer"><FaXTwitter className="mr-2"/>Twitter</a>
-                                    </Button>
-                                    <Button asChild variant="outline">
-                                        <a href={whatsappShareUrl} target="_blank" rel="noopener noreferrer"><FaWhatsapp className="mr-2"/>WhatsApp</a>
-                                    </Button>
-                                    <Button variant="outline" onClick={handleCopyLink}>
-                                        <FaInstagram className="mr-2" />
-                                        <span>Instagram</span>
-                                    </Button>
-                                </div>
-                            </div>
-                        </DialogContent>
-                    </Dialog>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
                 </div>
             </CardContent>
         </Card>

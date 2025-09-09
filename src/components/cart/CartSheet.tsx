@@ -12,7 +12,12 @@ import type { StoreConfig } from '@/types';
 import { useMemo } from 'react';
 import { ShoppingCart } from 'lucide-react';
 
-export default function CartSheet({ storeConfig }: { storeConfig: StoreConfig }) {
+interface CartSheetProps {
+    storeConfig: StoreConfig;
+    setSheetOpen: (open: boolean) => void;
+}
+
+export default function CartSheet({ storeConfig, setSheetOpen }: CartSheetProps) {
   const { cartItems, cartCount, totalPrice } = useCart();
 
   const taxAmount = useMemo(() => {
@@ -23,8 +28,8 @@ export default function CartSheet({ storeConfig }: { storeConfig: StoreConfig })
   const finalPrice = totalPrice + taxAmount;
 
   return (
-    <SheetContent className="flex w-full flex-col pr-0 sm:max-w-lg">
-      <SheetHeader className="px-6">
+    <SheetContent className="flex w-full flex-col p-0">
+      <SheetHeader className="p-6 pb-2">
         <SheetTitle>Carrito de Compras ({cartCount})</SheetTitle>
       </SheetHeader>
       
@@ -58,7 +63,7 @@ export default function CartSheet({ storeConfig }: { storeConfig: StoreConfig })
                         <span>${finalPrice.toFixed(2)}</span>
                     </div>
                 </div>
-              <Button asChild size="lg" className="w-full">
+              <Button asChild size="lg" className="w-full" onClick={() => setSheetOpen(false)}>
                 <Link href="/checkout">Proceder al Pago</Link>
               </Button>
             </div>
@@ -70,7 +75,7 @@ export default function CartSheet({ storeConfig }: { storeConfig: StoreConfig })
             <ShoppingCart className="mx-auto h-16 w-16 text-muted-foreground" />
             <h3 className="text-lg font-semibold mt-4">Tu carrito está vacío</h3>
             <p className="text-sm text-muted-foreground mt-2">¡Añade algunos productos para empezar!</p>
-            <Button asChild className="mt-4">
+            <Button asChild className="mt-4" onClick={() => setSheetOpen(false)}>
               <Link href="/tienda">Seguir Comprando</Link>
             </Button>
           </div>

@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import CartItem from "@/components/cart/CartItem";
 import { Separator } from "@/components/ui/separator";
 import { useRouter } from "next/navigation";
-import { ShoppingBag, Tag, Home, Briefcase, User as UserIcon, LogIn, Loader2, CreditCard, PlusCircle, UserCheck } from "lucide-react";
+import { ShoppingBag, Tag, Home, Briefcase, User as UserIcon, LogIn, Loader2, CreditCard, PlusCircle, UserCheck, AlertCircle } from "lucide-react";
 import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,6 +29,8 @@ import { addAddressAction } from "@/lib/actions/users";
 import { getCouponByCodeAction } from "@/lib/actions/coupons";
 import { createPaypalOrderAction, capturePaypalOrderAction } from "@/lib/actions/paypal";
 import { getProductsAction } from "@/lib/actions/products";
+import { Alert, AlertDescription as AlertDescriptionComponent, AlertTitle } from "@/components/ui/alert";
+
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "El nombre es requerido." }),
@@ -96,6 +98,11 @@ export default function CheckoutPageClient({ storeConfig }: { storeConfig: Store
     if (!storeConfig || !storeConfig.taxRate) return 0;
     return priceAfterDiscount * (storeConfig.taxRate / 100);
   }, [priceAfterDiscount, storeConfig]);
+
+  const hasOnDemandProducts = useMemo(() => {
+    return cartItems.some(item => item.product.saleType === 'on_demand');
+  }, [cartItems]);
+
 
   const finalPrice = priceAfterDiscount + taxAmount;
 
@@ -247,6 +254,17 @@ export default function CheckoutPageClient({ storeConfig }: { storeConfig: Store
                   Estás a solo un paso de completar tu pedido.
                 </p>
             </div>
+
+            {hasOnDemandProducts && (
+                <Alert className="mb-8">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Aviso sobre Pedidos Bajo Demanda</AlertTitle>
+                  <AlertDescriptionComponent>
+                    Tu pedido incluye artículos que se importan bajo demanda. El tiempo de importación estimado es de 3 a 4 semanas. Ocasionalmente, pueden ocurrir demoras adicionales por motivos logísticos o aduaneros ajenos a la tienda.
+                  </AlertDescriptionComponent>
+                </Alert>
+            )}
+
             <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
                 <div className="lg:order-2">
                     <Form {...form}>
@@ -400,24 +418,24 @@ export default function CheckoutPageClient({ storeConfig }: { storeConfig: Store
                             <div className="space-y-2 text-sm">
                                 <div className="flex justify-between">
                                     <span>Subtotal</span>
-                                    <span>${subtotal.toFixed(2)}</span>
+                                    <span>$${subtotal.toFixed(2)}</span>
                                 </div>
                                 {appliedCoupon && (
                                     <div className="flex justify-between text-destructive">
                                         <span>Descuento ({appliedCoupon.code})</span>
-                                        <span>-${couponDiscount.toFixed(2)}</span>
+                                        <span>-$${couponDiscount.toFixed(2)}</span>
                                     </div>
                                 )}
                                 {storeConfig && storeConfig.taxRate > 0 && (
                                     <div className="flex justify-between">
                                         <span>IVA ({storeConfig.taxRate}%)</span>
-                                        <span>${taxAmount.toFixed(2)}</span>
+                                        <span>$${taxAmount.toFixed(2)}</span>
                                     </div>
                                 )}
                                 <Separator className="my-2" />
                                 <div className="flex justify-between font-bold text-lg">
                                     <span>Total</span>
-                                    <span>${finalPrice > 0 ? finalPrice.toFixed(2) : '0.00'}</span>
+                                    <span>$${finalPrice > 0 ? finalPrice.toFixed(2) : '0.00'}</span>
                                 </div>
                             </div>
                         </CardContent>
