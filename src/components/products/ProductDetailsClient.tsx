@@ -320,7 +320,7 @@ export default function ProductDetailsClient({
                      onChange={(e) => setCustomization(c => ({...c, notes: e.target.value}))}
                      placeholder={
                        customization.patches && !customization.nameAndNumber ? 'Ej: Parche de la Champions League' :
-                       !customization.patches && customization.nameAndNumber ? 'Ej: RONALDO / 7' :
+                       !customization.patches && custom.nameAndNumber ? 'Ej: RONALDO / 7' :
                        'Ej: Parche Champions League, Nombre: RONALDO, Dorsal: 7'
                      }
                      className="mt-1"
@@ -349,29 +349,28 @@ export default function ProductDetailsClient({
         
         <Card className="bg-secondary/50 border-dashed">
             <CardContent className="pt-6 flex flex-col gap-4">
-                {!isOutOfStock && (
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <div className="flex items-center border rounded-md bg-background">
-                            <Button variant="ghost" size="icon" className="h-12 sm:h-12" onClick={() => setQuantity(q => Math.max(1, q - 1))}>
-                                <Minus className="w-4 h-4" />
-                            </Button>
-                            <span className="w-12 text-center font-bold">{quantity}</span>
-                            <Button variant="ghost" size="icon" className="h-12 sm:h-12" onClick={() => setQuantity(q => q + 1)}>
-                                <Plus className="w-4 h-4" />
-                            </Button>
-                        </div>
-                        <Button size="lg" className="w-full flex-1 min-w-[150px] shadow-lg hover:shadow-primary/30" onClick={handleAddToCart} disabled={isAddToCartDisabled}>
-                            <ShoppingCart className="mr-2 h-5 w-5" /> Añadir al Carrito
-                        </Button>
-                    </div>
-                )}
-                {isOutOfStock && (
+                 {isOutOfStock ? (
                     <Button size="lg" className="w-full" disabled>
                         <Bell className="mr-2 h-5 w-5" />
                         Próximamente disponible
                     </Button>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-[auto,1fr] gap-4">
+                        <div className="flex items-center border rounded-md bg-background">
+                            <Button variant="ghost" size="icon" className="h-12" onClick={() => setQuantity(q => Math.max(1, q - 1))}>
+                                <Minus className="w-4 h-4" />
+                            </Button>
+                            <span className="w-12 text-center font-bold">{quantity}</span>
+                            <Button variant="ghost" size="icon" className="h-12" onClick={() => setQuantity(q => q + 1)}>
+                                <Plus className="w-4 h-4" />
+                            </Button>
+                        </div>
+                        <Button size="lg" className="w-full shadow-lg hover:shadow-primary/30" onClick={handleAddToCart} disabled={isAddToCartDisabled}>
+                            <ShoppingCart className="mr-2 h-5 w-5" /> Añadir al Carrito
+                        </Button>
+                    </div>
                 )}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Button size="lg" variant="outline" className="w-full" onClick={() => toggleFavorite(product.id, product.name)} disabled={isFavoritesLoading}>
                         <Heart className={cn("mr-2 h-5 w-5 transition-all", isActuallyFavorite ? "text-red-500 fill-red-500" : "text-foreground")} />
                         <span>{isActuallyFavorite ? 'En Favoritos' : 'Favorito'}</span>
