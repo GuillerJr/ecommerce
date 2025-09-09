@@ -141,7 +141,7 @@ export default function TiendaPageClient({
     }
 
     if (categoryQuery !== 'all') {
-      const categoryExists = allCategories.some(c => c.name === categoryQuery);
+      const categoryExists = allCategories.some(c => c.name === categoryQuery && c.status === 'Activo');
       if (!categoryExists) {
           notFound = true;
       } else {
@@ -153,7 +153,7 @@ export default function TiendaPageClient({
     }
 
     if (subcategoryQuery !== 'all' && !notFound) {
-      const subcategoryExists = allSubcategories.some(s => s.name === subcategoryQuery);
+      const subcategoryExists = allSubcategories.some(s => s.name === subcategoryQuery && s.status === 'Activo');
        if (!subcategoryExists) {
           notFound = true;
       } else {
@@ -363,21 +363,23 @@ export default function TiendaPageClient({
             {filteredAndSortedProducts.length > 0 ? (
             <>
                 <ProductGrid products={paginatedProducts} activeDiscounts={activeDiscounts} allBrands={allBrands} />
-                <Pagination>
-                    <PaginationContent>
-                    {currentPage > 1 && (
-                        <PaginationItem>
-                        <PaginationPrevious href={createPageURL(currentPage - 1)} />
-                        </PaginationItem>
-                    )}
-                    {renderPagination()}
-                    {currentPage < totalPages && (
-                        <PaginationItem>
-                            <PaginationNext href={createPageURL(currentPage + 1)} />
-                        </PaginationItem>
-                    )}
-                    </PaginationContent>
-                </Pagination>
+                <div className="mt-12">
+                    <Pagination>
+                        <PaginationContent>
+                        {currentPage > 1 && (
+                            <PaginationItem>
+                            <PaginationPrevious href={createPageURL(currentPage - 1)} />
+                            </PaginationItem>
+                        )}
+                        {renderPagination()}
+                        {currentPage < totalPages && (
+                            <PaginationItem>
+                                <PaginationNext href={createPageURL(currentPage + 1)} />
+                            </PaginationItem>
+                        )}
+                        </PaginationContent>
+                    </Pagination>
+                </div>
             </>
             ) : (
             <div className="text-center py-16 border-2 border-dashed rounded-lg">
