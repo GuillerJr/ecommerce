@@ -52,6 +52,7 @@ export default function TiendaPageClient({
   const searchQuery = searchParams.get('q') || '';
   const categoryQuery = searchParams.get('category') || 'all';
   const subcategoryQuery = searchParams.get('subcategory') || 'all';
+  const brandQuery = searchParams.get('brand') || 'all';
   const pageQuery = searchParams.get('page') || '1';
   const sortQuery = searchParams.get('sort') || 'relevance';
   const priceQuery = searchParams.get('price');
@@ -164,6 +165,13 @@ export default function TiendaPageClient({
       }
     }
 
+    if (brandQuery !== 'all') {
+      const brand = allBrands.find(b => b.name === brandQuery);
+      if (brand) {
+        filtered = filtered.filter(p => p.brandId === brand.id);
+      }
+    }
+
     if(notFound) {
         return { filteredAndSortedProducts: [], categoryNotFound: true };
     }
@@ -199,7 +207,7 @@ export default function TiendaPageClient({
     }
 
     return { filteredAndSortedProducts: sorted, categoryNotFound: notFound };
-  }, [searchQuery, categoryQuery, subcategoryQuery, priceRange, sortQuery, allProducts, allSubcategories, allCategories, availability, activeDiscounts]);
+  }, [searchQuery, categoryQuery, subcategoryQuery, brandQuery, priceRange, sortQuery, allProducts, allSubcategories, allCategories, allBrands, availability, activeDiscounts]);
 
   const totalPages = Math.ceil(filteredAndSortedProducts.length / PRODUCTS_PER_PAGE);
   const paginatedProducts = useMemo(() => filteredAndSortedProducts.slice(
@@ -306,7 +314,7 @@ export default function TiendaPageClient({
                 </p>
             </div>
             <Separator />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-4">
                 {/* Price Filter */}
                 <div>
                 <Label className="text-base font-semibold">Rango de precios</Label>
@@ -338,6 +346,24 @@ export default function TiendaPageClient({
                     <Label htmlFor="filter-onDemand" className="text-sm font-normal">Bajo Pedido</Label>
                     </div>
                 </div>
+                </div>
+
+                {/* Brand Filter */}
+                <div>
+                  <Label className="text-base font-semibold">Marca</Label>
+                   <Select value={brandQuery} onValueChange={(value) => updateFilters({ brand: value })}>
+                    <SelectTrigger className="w-full mt-2">
+                      <SelectValue placeholder="Marca" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas las marcas</SelectItem>
+                      {allBrands.map(brand => (
+                        <SelectItem key={brand.id} value={brand.name}>
+                          {brand.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Sort Order */}
