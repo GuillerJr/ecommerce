@@ -17,13 +17,10 @@ interface HomePageContentClientProps {
   allSubcategories: Subcategory[];
   allDiscounts: Discount[];
   allBrands: Brand[];
+  featuredProducts: Product[];
 }
 
-export default function HomePageContentClient({ allProducts, allCategories, allSubcategories, allDiscounts, allBrands }: HomePageContentClientProps) {
-  
-  const featuredProducts = useMemo(() => {
-    return allProducts.slice(0, 8);
-  }, [allProducts]);
+export default function HomePageContentClient({ allProducts, allCategories, allSubcategories, allDiscounts, allBrands, featuredProducts }: HomePageContentClientProps) {
   
   const activeDiscounts = useMemo(() => {
     return allDiscounts.filter(d => d.status === 'Activo');
