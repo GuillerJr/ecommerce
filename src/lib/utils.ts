@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import type { Product, Discount } from '@/types';
+import type { ReadonlyURLSearchParams } from "next/navigation";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -30,4 +31,26 @@ export const calculateDiscountedPrice = (product: Product, allDiscounts: Discoun
         finalPrice,
         discount
     };
+};
+
+export const updateSearchParams = (
+    currentParams: ReadonlyURLSearchParams,
+    newParams: Record<string, string | null>
+) => {
+    const params = new URLSearchParams(currentParams.toString());
+    Object.entries(newParams).forEach(([key, value]) => {
+      if (value === null || value === '' || value === 'all' || (key === 'sort' && value === 'relevance')) {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+
+    // Si se está actualizando un filtro que no es la página, reiniciar la paginación.
+    const isPaging = Object.keys(newParams).length === 1 && 'page' in newParams;
+    if (!isPaging) {
+        params.set('page', '1');
+    }
+
+    return params.toString();
 };

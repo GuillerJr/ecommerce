@@ -36,6 +36,7 @@ import { useComparison } from '@/contexts/ComparisonContext';
 import { Badge } from '../ui/badge';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { updateSearchParams } from '@/lib/utils';
 
 export default function Header({ storeConfig }: { storeConfig: StoreConfig }) {
   const router = useRouter();
@@ -60,7 +61,7 @@ export default function Header({ storeConfig }: { storeConfig: StoreConfig }) {
     })
   }, []);
   
-  // Only set initial state from URL params
+  // Sincronizar el estado local con los parámetros de la URL solo al montar
   React.useEffect(() => {
     setSearchQuery(searchParams.get('q') || '');
     setSearchCategory(searchParams.get('category') || 'all');
@@ -80,14 +81,12 @@ export default function Header({ storeConfig }: { storeConfig: StoreConfig }) {
   
   const handleSearchSubmit = (e: FormEvent) => {
     e.preventDefault();
-    const params = new URLSearchParams(searchParams.toString());
-    if (searchQuery) params.set('q', searchQuery);
-    else params.delete('q');
-    
-    if (searchCategory !== 'all') params.set('category', searchCategory);
-    else params.delete('category');
-
-    router.push(`/tienda?${params.toString()}`);
+    const newUrl = updateSearchParams(searchParams, {
+        q: searchQuery,
+        category: searchCategory,
+        page: '1' // Siempre reiniciar a la página 1 en una nueva búsqueda
+    });
+    router.push(`/tienda?${newUrl}`);
     if (isMobileMenuOpen) setIsMobileMenuOpen(false);
   };
 
