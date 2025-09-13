@@ -100,6 +100,20 @@ export default function TiendaPageClient({
       }
   };
 
+  const usedBrandIds = useMemo(() => {
+    const brandIds = new Set<string>();
+    allProducts.forEach(product => {
+      if (product.brandId) {
+        brandIds.add(product.brandId);
+      }
+    });
+    return brandIds;
+  }, [allProducts]);
+
+  const availableBrandsToFilter = useMemo(() => {
+    return allBrands.filter(brand => usedBrandIds.has(brand.id));
+  }, [allBrands, usedBrandIds]);
+
   const { filteredAndSortedProducts, categoryNotFound } = useMemo(() => {
     const subcategoryToCategoryMap = new Map<string, Category>();
     allSubcategories.forEach(sub => {
@@ -346,7 +360,7 @@ export default function TiendaPageClient({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todas las marcas</SelectItem>
-                      {allBrands.map(brand => (
+                      {availableBrandsToFilter.map(brand => (
                         <SelectItem key={brand.id} value={brand.name}>
                           {brand.name}
                         </SelectItem>
