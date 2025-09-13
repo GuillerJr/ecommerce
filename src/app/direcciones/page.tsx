@@ -142,35 +142,30 @@ export default function DireccionesPage() {
                 {addresses.length > 0 ? (
                     <div className="grid gap-6 md:grid-cols-2">
                         {addresses.map(addr => (
-                            <Card key={addr.id} className={cn("flex flex-col", addr.isDefault && "border-primary")}>
-                                <CardHeader className="flex flex-row items-center justify-between p-4">
-                                     <div className="flex items-center gap-3">
+                            <Card key={addr.id} className={cn("group relative", addr.isDefault && "border-primary")}>
+                                <CardContent className="p-4 flex items-start gap-4">
+                                     <div className="flex-shrink-0 pt-1">
                                         {getAddressIcon(addr.name)}
-                                        <CardTitle className="text-lg">{addr.name}</CardTitle>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        {addr.isDefault && <Badge><Star className="h-3 w-3 mr-1"/> Predeterminada</Badge>}
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={() => handleEdit(addr)}>
-                                                    <Pencil className="mr-2 h-4 w-4" /> Editar
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleDelete(addr.id)} className="text-destructive focus:text-destructive">
-                                                    <Trash2 className="mr-2 h-4 w-4" /> Eliminar
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                    <div className="flex-1">
+                                        <div className="flex items-center justify-between">
+                                          <h3 className="font-semibold text-base">{addr.name}</h3>
+                                          {addr.isDefault && <Badge variant="outline" className="text-xs border-primary text-primary"><Star className="h-3 w-3 mr-1.5"/> Predeterminada</Badge>}
+                                        </div>
+                                        <div className="text-muted-foreground text-sm space-y-0.5 mt-1">
+                                            <p>{addr.address}</p>
+                                            <p>{addr.city}, {addr.postalCode}</p>
+                                            <p>{addr.country}</p>
+                                        </div>
                                     </div>
-                                </CardHeader>
-                                <CardContent className="p-4 pt-0 text-muted-foreground space-y-1">
-                                    <p>{addr.address}</p>
-                                    <p>{addr.city}, {addr.postalCode}</p>
-                                    <p>{addr.country}</p>
+                                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(addr)}>
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(addr.id)}>
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
                                 </CardContent>
                             </Card>
                         ))}
