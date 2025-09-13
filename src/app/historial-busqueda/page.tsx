@@ -1,3 +1,4 @@
+
 /**
  * @fileoverview Página para mostrar el historial de productos vistos recientemente por el usuario.
  * Permite al usuario ver y borrar su historial, y cambiar entre vista de cuadrícula y lista.
@@ -14,14 +15,12 @@ import { getBrandsAction } from '@/lib/actions/brands';
 import type { Product, Discount, Brand } from '@/types';
 import ProductGrid from '@/components/products/ProductGrid';
 import { Button } from '@/components/ui/button';
-import { History, ArrowLeft, Trash2, LayoutGrid, List } from 'lucide-react';
+import { History, ArrowLeft, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import ProductList from '@/components/products/ProductList';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,7 +54,6 @@ export default function HistorialBusquedaPage() {
     const [discounts, setDiscounts] = useState<Discount[]>([]);
     const [brands, setBrands] = useState<Brand[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
     // Redirige al login si el usuario no está autenticado.
     useEffect(() => {
@@ -140,32 +138,15 @@ export default function HistorialBusquedaPage() {
                     <p className="text-lg text-muted-foreground">Productos que has explorado recientemente.</p>
                 </div>
                  {recentlyViewedProducts.length > 0 && (
-                    <div className="flex items-center gap-4">
-                        <ToggleGroup type="single" value={viewMode} onValueChange={(value: 'grid' | 'list') => { if (value) setViewMode(value) }} aria-label="Tipo de vista">
-                            <ToggleGroupItem value="grid" aria-label="Vista de cuadrícula">
-                                <LayoutGrid className="h-4 w-4" />
-                            </ToggleGroupItem>
-                            <ToggleGroupItem value="list" aria-label="Vista de lista">
-                                <List className="h-4 w-4" />
-                            </ToggleGroupItem>
-                        </ToggleGroup>
-                        <Button variant="outline" onClick={handleClearHistory}>
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Borrar Historial
-                        </Button>
-                    </div>
+                    <Button variant="outline" onClick={handleClearHistory}>
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Borrar Historial
+                    </Button>
                 )}
             </div>
 
             {recentlyViewedProducts.length > 0 ? (
-              // Muestra los productos en vista de cuadrícula o lista según la selección.
-              <>
-                {viewMode === 'grid' ? (
-                   <ProductGrid products={recentlyViewedProducts} activeDiscounts={activeDiscounts} allBrands={brands} showAddToCartButton={false} />
-                ) : (
-                   <ProductList products={recentlyViewedProducts} activeDiscounts={activeDiscounts} allBrands={brands} showAddToCartButton={false}/>
-                )}
-              </>
+                <ProductGrid products={recentlyViewedProducts} activeDiscounts={activeDiscounts} allBrands={brands} showAddToCartButton={false} />
             ) : (
                 // Muestra un mensaje si no hay historial.
                 <Card>

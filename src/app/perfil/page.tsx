@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const dynamic = 'force-dynamic';
 
@@ -68,6 +69,59 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
+const ProfileSkeleton = () => (
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="max-w-4xl mx-auto">
+            <div className="mb-8">
+                <Skeleton className="h-10 w-1/2" />
+                <Skeleton className="h-6 w-1/3 mt-2" />
+            </div>
+            <div className="grid md:grid-cols-3 gap-8">
+                <div className="md:col-span-2">
+                    <Card>
+                        <CardHeader>
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                <div className="flex items-center gap-4">
+                                    <Skeleton className="h-16 w-16 sm:h-20 sm:w-20 rounded-full" />
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-7 w-32" />
+                                        <Skeleton className="h-5 w-40" />
+                                        <Skeleton className="h-5 w-16" />
+                                    </div>
+                                </div>
+                                <Skeleton className="h-9 w-full sm:w-28" />
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <Skeleton className="h-5 w-full" />
+                        </CardContent>
+                    </Card>
+                </div>
+                <div>
+                    <Card>
+                        <CardHeader>
+                            <Skeleton className="h-7 w-36" />
+                        </CardHeader>
+                        <CardContent className="p-0">
+                        <ul className="divide-y">
+                            {[...Array(navItems.length)].map((_, i) => (
+                            <li key={i} className="flex items-center justify-between p-4">
+                                <div className="flex items-center gap-4">
+                                    <Skeleton className="h-5 w-5 rounded-full" />
+                                    <Skeleton className="h-5 w-32" />
+                                </div>
+                                <Skeleton className="h-5 w-5" />
+                            </li>
+                            ))}
+                        </ul>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        </div>
+    </div>
+);
+
 
 export default function PerfilPage() {
   const { user, loading, logout, updateUser, updatePassword } = useAuth();
@@ -108,7 +162,7 @@ export default function PerfilPage() {
   }, [user, loading, router, form, isEditDialogOpen]);
 
   if (loading || !user) {
-    return <div className="flex h-screen items-center justify-center">Cargando...</div>;
+    return <ProfileSkeleton />;
   }
 
   const onSubmit = async (data: ProfileFormValues) => {

@@ -20,6 +20,7 @@ import Image from 'next/image';
 import { Pagination, PaginationContent, PaginationItem } from '@/components/ui/pagination';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Skeleton } from '../ui/skeleton';
 
 const ORDERS_PER_PAGE = 5;
 
@@ -59,6 +60,25 @@ const CustomizationDetails = ({ customization }: { customization?: Customization
     );
 };
 
+const OrdersSkeleton = () => (
+    <div className="space-y-4">
+        {[...Array(3)].map((_, i) => (
+            <Card key={i} className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="grid gap-2 flex-1">
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-4 w-24" />
+                </div>
+                <div className="flex flex-col sm:items-end gap-2 w-full sm:w-auto">
+                    <Skeleton className="h-6 w-24 rounded-full" />
+                    <Skeleton className="h-9 w-28" />
+                </div>
+            </Card>
+        ))}
+    </div>
+);
+
+
 interface PedidosPageClientProps {
     initialOrders: Order[];
     initialProducts: Product[];
@@ -86,7 +106,21 @@ export default function PedidosPageClient({ initialOrders, initialProducts }: Pe
   const getProductById = (id: string) => products.find(p => p.id === id);
   
   if (loading) {
-    return <div className="flex h-dvh items-center justify-center">Cargando...</div>;
+     return (
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div className="max-w-4xl mx-auto">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Mis Pedidos</CardTitle>
+                        <CardDescription>Aquí puedes ver y rastrear el historial de tus pedidos.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <OrdersSkeleton />
+                    </CardContent>
+                 </Card>
+            </div>
+        </div>
+    );
   }
 
   if (!user) {

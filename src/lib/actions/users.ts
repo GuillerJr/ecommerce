@@ -96,7 +96,7 @@ export async function updateAddressAction(userId: string, address: Address) {
     }
 }
 
-export async function deleteAddressFromDb(userId: string, addressId: string) {
+export async function deleteAddressAction(userId: string, addressId: string) {
     try {
         const user = await deleteAddressFromDbInData(userId, addressId);
         revalidatePath('/direcciones');
