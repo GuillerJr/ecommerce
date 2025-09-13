@@ -85,15 +85,15 @@ export default function ProductCard({ product, discountInfo, brandName }: Produc
         </div>
       </div>
 
-      <CardContent className="flex flex-1 flex-col p-4">
+      <CardContent className="flex flex-1 flex-col p-3 md:p-4">
         {brandName && (
           <p className="text-xs text-muted-foreground mb-1">{brandName}</p>
         )}
         <Link href={`/product/${product.id}`} className="z-10">
-          <h3 className="font-semibold leading-tight text-foreground transition-colors hover:text-primary line-clamp-2">{product.name}</h3>
+          <h3 className="font-semibold leading-tight text-foreground transition-colors hover:text-primary text-sm sm:text-sm md:text-base">{product.name}</h3>
         </Link>
         
-        <div className="mt-2 flex items-center gap-2">
+        <div className="mt-1 flex items-center gap-2">
             {product.reviews.length > 0 && (
               <>
                 <div className="flex items-center">
@@ -108,14 +108,14 @@ export default function ProductCard({ product, discountInfo, brandName }: Produc
         
         <div className="flex-1" />
 
-        <div className="mt-4 flex items-end justify-between">
+        <div className="mt-2 flex items-end justify-between">
           {discountInfo ? (
             <div>
               <p className="text-xs text-muted-foreground line-through">${discountInfo.originalPrice.toFixed(2)}</p>
-              <p className="text-xl font-bold text-destructive">${discountInfo.finalPrice.toFixed(2)}</p>
+              <p className="text-lg md:text-xl font-bold text-destructive">${discountInfo.finalPrice.toFixed(2)}</p>
             </div>
           ) : (
-            <p className="text-xl font-bold text-foreground">${product.price.toFixed(2)}</p>
+            <p className="text-lg md:text-xl font-bold text-foreground">${product.price.toFixed(2)}</p>
           )}
         </div>
       </CardContent>
