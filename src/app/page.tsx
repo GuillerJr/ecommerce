@@ -71,7 +71,7 @@ export default async function Home() {
         // Prioridad 4 (fallback): Nombre completo del producto
         return a.name.localeCompare(b.name);
     })
-    .slice(0, 8);
+    .slice(0, 10);
 
 
   return (
