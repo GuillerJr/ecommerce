@@ -333,7 +333,7 @@ export default function CheckoutPageClient({ storeConfig }: { storeConfig: Store
                                 <p className="text-sm text-muted-foreground pb-4">
                                     Completa tu compra de forma segura con PayPal. Puedes usar tu saldo de PayPal o pagar con tarjeta de crédito/débito.
                                 </p>
-                                <div className="pt-4 border-t">
+                                <div className="pt-4 border-t relative isolate">
                                   {paypalEnabled ? (
                                       <PayPalPaymentButtons
                                           isValid={form.formState.isValid}
@@ -364,7 +364,7 @@ export default function CheckoutPageClient({ storeConfig }: { storeConfig: Store
                                                     userId: user.id,
                                                     customerName: form.getValues('name'), 
                                                     email: form.getValues('email'), 
-                                                    phone: user?.phone ? `${user.phone.countryCode}${user.phone.number}` : 'N/A',
+                                                    phone: user?.phone ? `${'${user.phone.countryCode}'}${'${user.phone.number}'}` : 'N/A',
                                                     identification: user?.identification,
                                                     shippingAddress: selectedAddress,
                                                     paymentMethod: 'PayPal' as const
@@ -418,24 +418,24 @@ export default function CheckoutPageClient({ storeConfig }: { storeConfig: Store
                             <div className="space-y-2 text-sm">
                                 <div className="flex justify-between">
                                     <span>Subtotal</span>
-                                    <span>${subtotal.toFixed(2)}</span>
+                                    <span>{subtotal.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
                                 </div>
                                 {appliedCoupon && (
                                     <div className="flex justify-between text-destructive">
                                         <span>Descuento ({appliedCoupon.code})</span>
-                                        <span>-${couponDiscount.toFixed(2)}</span>
+                                        <span>-{couponDiscount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
                                     </div>
                                 )}
                                 {storeConfig && storeConfig.taxRate > 0 && (
                                     <div className="flex justify-between">
                                         <span>IVA ({storeConfig.taxRate}%)</span>
-                                        <span>${taxAmount.toFixed(2)}</span>
+                                        <span>{taxAmount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
                                     </div>
                                 )}
                                 <Separator className="my-2" />
                                 <div className="flex justify-between font-bold text-lg">
                                     <span>Total</span>
-                                    <span>${finalPrice > 0 ? finalPrice.toFixed(2) : '0.00'}</span>
+                                    <span>{(finalPrice > 0 ? finalPrice : 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
                                 </div>
                             </div>
                         </CardContent>
