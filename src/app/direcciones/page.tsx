@@ -149,22 +149,24 @@ export default function DireccionesPage() {
                                     </div>
                                     <div className="flex-1">
                                         <div className="flex items-center justify-between">
-                                          <h3 className="font-semibold text-base">{addr.name}</h3>
-                                          {addr.isDefault && <Badge variant="outline" className="text-xs border-primary text-primary"><Star className="h-3 w-3 mr-1.5"/> Predeterminada</Badge>}
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="font-semibold text-base">{addr.name}</h3>
+                                                {addr.isDefault && <Badge variant="outline" className="text-xs border-primary text-primary"><Star className="h-3 w-3 mr-1.5"/> Predeterminada</Badge>}
+                                            </div>
+                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(addr)}>
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(addr.id)}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
                                         </div>
                                         <div className="text-muted-foreground text-sm space-y-0.5 mt-1">
                                             <p>{addr.address}</p>
                                             <p>{addr.city}, {addr.postalCode}</p>
                                             <p>{addr.country}</p>
                                         </div>
-                                    </div>
-                                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(addr)}>
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(addr.id)}>
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
                                     </div>
                                 </CardContent>
                             </Card>
