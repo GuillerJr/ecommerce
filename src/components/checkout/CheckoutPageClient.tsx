@@ -418,24 +418,24 @@ export default function CheckoutPageClient({ storeConfig }: { storeConfig: Store
                             <div className="space-y-2 text-sm">
                                 <div className="flex justify-between">
                                     <span>Subtotal</span>
-                                    <span>$${subtotal.toFixed(2)}</span>
+                                    <span>${subtotal.toFixed(2)}</span>
                                 </div>
                                 {appliedCoupon && (
                                     <div className="flex justify-between text-destructive">
                                         <span>Descuento ({appliedCoupon.code})</span>
-                                        <span>-$${couponDiscount.toFixed(2)}</span>
+                                        <span>-${couponDiscount.toFixed(2)}</span>
                                     </div>
                                 )}
                                 {storeConfig && storeConfig.taxRate > 0 && (
                                     <div className="flex justify-between">
                                         <span>IVA ({storeConfig.taxRate}%)</span>
-                                        <span>$${taxAmount.toFixed(2)}</span>
+                                        <span>${taxAmount.toFixed(2)}</span>
                                     </div>
                                 )}
                                 <Separator className="my-2" />
                                 <div className="flex justify-between font-bold text-lg">
                                     <span>Total</span>
-                                    <span>$${finalPrice > 0 ? finalPrice.toFixed(2) : '0.00'}</span>
+                                    <span>${finalPrice > 0 ? finalPrice.toFixed(2) : '0.00'}</span>
                                 </div>
                             </div>
                         </CardContent>
