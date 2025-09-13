@@ -10,8 +10,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { getProductsAction } from "@/lib/actions/products";
-import type { Product } from "@/types";
+import type { Product, Discount, Brand } from "@/types";
 import Image from "next/image";
+import ProductListItem from "@/components/products/ProductListItem";
+import { getDiscountsAction, getBrandsAction } from "@/lib/actions";
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +22,9 @@ export default function FavoritosPage() {
     const router = useRouter();
     const { favoriteIds, toggleFavorite } = useFavorites();
     const [allProducts, setAllProducts] = useState<Product[]>([]);
+    const [allDiscounts, setAllDiscounts] = useState<Discount[]>([]);
+    const [allBrands, setAllBrands] = useState<Brand[]>([]);
+
 
     useEffect(() => {
         if (user) {
@@ -28,6 +33,12 @@ export default function FavoritosPage() {
                     setAllProducts(result.products);
                 }
             });
+            getDiscountsAction().then(result => {
+                if(result.success && result.discounts) setAllDiscounts(result.discounts);
+            })
+             getBrandsAction().then(result => {
+                if(result.success && result.brands) setAllBrands(result.brands);
+            })
         }
     }, [user]);
 
@@ -57,35 +68,13 @@ export default function FavoritosPage() {
                 {favoriteProducts.length > 0 ? (
                     <div className="space-y-4">
                         {favoriteProducts.map((product) => (
-                            <Card key={product.id}>
-                                <CardContent className="p-4 flex flex-col sm:flex-row items-center gap-6">
-                                    <Link href={`/product/${product.id}`} className="flex-shrink-0 w-full sm:w-auto">
-                                        <Image
-                                            src={product.image}
-                                            alt={product.name}
-                                            width={120}
-                                            height={120}
-                                            className="rounded-md object-cover aspect-square border w-full sm:w-[120px]"
-                                        />
-                                    </Link>
-                                    <div className="flex-1 grid gap-1 w-full">
-                                        <Link href={`/product/${product.id}`} className="font-semibold text-lg hover:underline">
-                                            {product.name}
-                                        </Link>
-                                        <p className="text-muted-foreground text-sm line-clamp-2">{product.description}</p>
-                                        <p className="font-bold text-xl">${product.price.toFixed(2)}</p>
-                                    </div>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => toggleFavorite(product.id, product.name)}
-                                        className="w-full sm:w-auto self-center"
-                                    >
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        Eliminar
-                                    </Button>
-                                </CardContent>
-                            </Card>
+                           <ProductListItem
+                                key={product.id}
+                                product={product}
+                                activeDiscounts={allDiscounts.filter(d => d.status === 'Activo')}
+                                allBrands={allBrands}
+                                showAddToCartButton={false}
+                            />
                         ))}
                     </div>
                 ) : (

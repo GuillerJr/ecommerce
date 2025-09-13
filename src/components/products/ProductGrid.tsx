@@ -2,14 +2,16 @@
 import type { Product, Discount, Brand } from '@/types';
 import ProductCard from './ProductCard';
 import { calculateDiscountedPrice } from '@/lib/utils';
+import ProductListItem from './ProductListItem';
 
 interface ProductGridProps {
   products: Product[];
   activeDiscounts: Discount[];
   allBrands: Brand[];
+  showAddToCartButton?: boolean;
 }
 
-export default function ProductGrid({ products, activeDiscounts, allBrands }: ProductGridProps) {
+export default function ProductGrid({ products, activeDiscounts, allBrands, showAddToCartButton = true }: ProductGridProps) {
   const brandMap = new Map(allBrands.map(b => [b.id, b.name]));
 
   return (

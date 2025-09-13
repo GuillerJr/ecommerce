@@ -6,15 +6,16 @@ interface ProductListProps {
   products: Product[];
   activeDiscounts: Discount[];
   allBrands: Brand[];
+  showAddToCartButton?: boolean;
 }
 
-export default function ProductList({ products, activeDiscounts, allBrands }: ProductListProps) {
+export default function ProductList({ products, activeDiscounts, allBrands, showAddToCartButton = true }: ProductListProps) {
   const brandMap = new Map(allBrands.map(b => [b.id, b.name]));
   return (
     <div className="space-y-4">
       {products.map(product => {
         const brandName = product.brandId ? brandMap.get(product.brandId) : undefined;
-        return <ProductListItem key={product.id} product={product} activeDiscounts={activeDiscounts} brandName={brandName} />
+        return <ProductListItem key={product.id} product={product} activeDiscounts={activeDiscounts} brandName={brandName} showAddToCartButton={showAddToCartButton} />
       })}
     </div>
   );

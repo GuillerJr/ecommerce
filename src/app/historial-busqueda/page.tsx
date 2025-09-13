@@ -161,9 +161,9 @@ export default function HistorialBusquedaPage() {
               // Muestra los productos en vista de cuadrícula o lista según la selección.
               <>
                 {viewMode === 'grid' ? (
-                   <ProductGrid products={recentlyViewedProducts} activeDiscounts={activeDiscounts} allBrands={brands} />
+                   <ProductGrid products={recentlyViewedProducts} activeDiscounts={activeDiscounts} allBrands={brands} showAddToCartButton={false} />
                 ) : (
-                   <ProductList products={recentlyViewedProducts} activeDiscounts={activeDiscounts} allBrands={brands} />
+                   <ProductList products={recentlyViewedProducts} activeDiscounts={activeDiscounts} allBrands={brands} showAddToCartButton={false}/>
                 )}
               </>
             ) : (

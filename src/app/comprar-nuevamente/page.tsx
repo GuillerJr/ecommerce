@@ -133,7 +133,7 @@ export default function ComprarNuevamentePage() {
 
             {buyAgainProducts.length > 0 ? (
                 // Muestra la cuadrícula de productos si el usuario ha comprado algo.
-                <ProductGrid products={buyAgainProducts} activeDiscounts={activeDiscounts} allBrands={brands} />
+                <ProductGrid products={buyAgainProducts} activeDiscounts={activeDiscounts} allBrands={brands} showAddToCartButton={false} />
             ) : (
                 // Muestra un mensaje si el usuario aún no tiene historial de compras.
                 <Card>

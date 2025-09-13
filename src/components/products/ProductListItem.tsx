@@ -13,9 +13,10 @@ interface ProductListItemProps {
   product: Product;
   activeDiscounts: Discount[];
   brandName?: string;
+  showAddToCartButton?: boolean;
 }
 
-export default function ProductListItem({ product, activeDiscounts, brandName }: ProductListItemProps) {
+export default function ProductListItem({ product, activeDiscounts, brandName, showAddToCartButton = true }: ProductListItemProps) {
   const { addToCart } = useCart();
   const discountInfo = calculateDiscountedPrice(product, activeDiscounts);
 
@@ -51,14 +52,20 @@ export default function ProductListItem({ product, activeDiscounts, brandName }:
             )}
           </div>
         </div>
-        <Button
-          onClick={() => addToCart(product, 1, {})}
-          className="w-full sm:w-auto self-center"
-          disabled={product.saleType === 'stock' && product.stock === 0}
-        >
-          <ShoppingCart className="mr-2 h-4 w-4" />
-          {product.saleType === 'stock' && product.stock === 0 ? 'Agotado' : 'Añadir al carrito'}
-        </Button>
+        {showAddToCartButton ? (
+            <Button
+              onClick={() => addToCart(product, 1, {})}
+              className="w-full sm:w-auto self-center"
+              disabled={product.saleType === 'stock' && product.stock === 0}
+            >
+              <ShoppingCart className="mr-2 h-4 w-4" />
+              {product.saleType === 'stock' && product.stock === 0 ? 'Agotado' : 'Añadir al carrito'}
+            </Button>
+        ) : (
+            <Button asChild className="w-full sm:w-auto self-center" variant="outline">
+                <Link href={`/product/${product.id}`}>Ver producto</Link>
+            </Button>
+        )}
       </CardContent>
     </Card>
   );
