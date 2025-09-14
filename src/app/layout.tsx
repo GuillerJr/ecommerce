@@ -6,7 +6,7 @@
  * configuración de proveedores de contexto a un componente cliente.
  */
 
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
@@ -43,6 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
           template: `%s | ${storeConfig.name}`,
         },
         description: storeConfig.description,
+        manifest: '/manifest.json',
       };
     }
   } catch (error) {
@@ -52,8 +53,14 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "HackTrickStore",
     description: "Tu tienda de equipamiento deportivo de alto rendimiento.",
+    manifest: '/manifest.json',
   };
 }
+
+export const viewport: Viewport = {
+  themeColor: '#111827',
+};
+
 
 /**
  * Componente RootLayout que envuelve toda la aplicación.
