@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import type { Product, User } from '@/types';
@@ -135,7 +136,6 @@ export async function optimizeImage(dataUrl: string): Promise<string> {
     }
 
     const optimizedBuffer = await sharp(buffer)
-      .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
       .webp({ quality: 80 })
       .toBuffer();
       
