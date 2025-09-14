@@ -164,38 +164,36 @@ export default function SugerenciasPage() {
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
             <div className="max-w-2xl mx-auto">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Lightbulb className="h-6 w-6 text-primary"/>
-                            Envíanos tus Sugerencias
-                        </CardTitle>
-                        <CardDescription>
-                            ¿Tienes una idea para mejorar la tienda o un producto que te gustaría ver? ¡Nos encantaría saberlo! Tus ideas y las de otros usuarios se mostrarán a continuación.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
+                <div className="mb-8">
+                  <h1 className="font-headline text-3xl md:text-4xl font-bold">Sugerencias</h1>
+                  <p className="text-lg text-muted-foreground">Tus ideas y las de la comunidad para mejorar la tienda.</p>
+                </div>
+
+                <div className="flex gap-4 border-b pb-6">
+                    <Avatar className="h-9 w-9">
+                        <AvatarFallback>{user ? user.name.charAt(0) : 'U'}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 space-y-3">
                         <Form {...form}>
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                                 <FormField
                                     control={form.control}
                                     name="suggestion"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Tu idea, sugerencia o producto deseado</FormLabel>
                                             <FormControl>
                                                 <Textarea
-                                                    placeholder="Ej: Me gustaría que vendieran balones de básquetbol de la marca..."
-                                                    rows={5}
+                                                    placeholder="¿Tienes una idea para un nuevo producto o una mejora?"
+                                                    rows={3}
                                                     {...field}
+                                                    className="text-base"
                                                 />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
-                                 <div className="flex items-center justify-between">
-                                    <p className="text-sm text-muted-foreground">Enviado por: <strong>{user.name}</strong></p>
+                                 <div className="flex items-center justify-end">
                                     <Button type="submit" disabled={form.formState.isSubmitting}>
                                         <Send className="mr-2 h-4 w-4"/>
                                         {form.formState.isSubmitting ? "Enviando..." : "Enviar Sugerencia"}
@@ -203,13 +201,13 @@ export default function SugerenciasPage() {
                                 </div>
                             </form>
                         </Form>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
 
-                 <div className="mt-12">
-                    <h2 className="text-2xl font-bold mb-4">Sugerencias de la Comunidad</h2>
+
+                 <div className="mt-8 space-y-8">
                      {isLoadingSuggestions ? <SuggestionSkeleton /> :
-                        <div className="space-y-6">
+                        <>
                             {suggestions.length > 0 ? (
                                 suggestions.map(suggestion => {
                                     const userLike = suggestion.likes?.includes(user.id);
@@ -242,13 +240,11 @@ export default function SugerenciasPage() {
                                     )
                                 })
                             ) : (
-                                <Card>
-                                    <CardContent className="text-center py-16">
-                                        <p className="text-muted-foreground">Sé el primero en dejar una sugerencia.</p>
-                                    </CardContent>
-                                </Card>
+                                <div className="text-center py-16">
+                                    <p className="text-muted-foreground">Sé el primero en dejar una sugerencia.</p>
+                                </div>
                             )}
-                        </div>
+                        </>
                     }
                  </div>
 
