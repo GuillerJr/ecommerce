@@ -398,3 +398,14 @@ export async function generateProductsXlsxTemplate(): Promise<{ success: boolean
         return { success: false, message: 'No se pudo generar la plantilla XLSX.' };
     }
 }
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '50mb',
+    },
+  },
+    experimental_uploadChunkSize: '50mb'
+};
+
+
+    
