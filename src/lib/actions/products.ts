@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import type { Product, User } from '@/types';
@@ -125,10 +124,16 @@ export async function addStockAction(productId: string, quantity: number, notes:
 
 export async function optimizeImage(dataUrl: string): Promise<string> {
     const base64 = dataUrl.split(',')[1];
-    if (!base64) throw new Error('Invalid data URL');
-    
+    if (!base64) throw new Error('URL de datos inválida');
+
     const buffer = Buffer.from(base64, 'base64');
     
+    // Validar tamaño de archivo (ej. 10MB)
+    const fileSizeInMB = buffer.length / (1024 * 1024);
+    if (fileSizeInMB > 10) {
+        throw new Error('El archivo de imagen es demasiado grande. El límite es 10MB.');
+    }
+
     const optimizedBuffer = await sharp(buffer)
       .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
       .webp({ quality: 80 })
