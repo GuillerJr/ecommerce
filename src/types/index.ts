@@ -425,4 +425,6 @@ export type Suggestion = {
     userName: string;
     suggestion: string;
     createdAt: string;
+    likes: string[];
+    dislikes: string[];
 };

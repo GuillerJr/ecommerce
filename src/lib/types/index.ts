@@ -259,7 +259,7 @@ export type StoreConfig = {
     isEInvoicingEnabled: boolean;
     nextInvoiceNumber: number;
     eInvoicingEnvironment: '1' | '2';
-    contribuyenteRimpe?: 'CONTRIBUYENTE NEGOCIO POPULAR - RÉGIMEN RIMPE' | 'CONTRIBUYENTE RÉGIMEN RIMPE' | 'none';
+    contribuyenteRimpe?: "CONTRIBUYENTE NEGOCIO POPULAR - RÉGIMEN RIMPE" | "CONTRIBUYENTE RÉGIMEN RIMPE" | 'none';
 };
 
 export type Giveaway = {
@@ -425,4 +425,6 @@ export type Suggestion = {
     userName: string;
     suggestion: string;
     createdAt: string;
+    likes: string[];
+    dislikes: string[];
 };
