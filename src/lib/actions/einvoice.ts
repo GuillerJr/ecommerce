@@ -12,10 +12,11 @@ import {
   generateInvoice,
   generateInvoiceXml,
 } from '../open-factura';
-import { generateRidePdf } from '../einvoice/ride';
 import { sendOrderConfirmationEmail } from '../email.server';
-import { query } from '../db.server';
+import { query, getClient } from '../db.server';
 import { revalidatePath } from 'next/cache';
+import { generateRidePdf } from '../einvoice/ride';
+
 
 const getSriUrls = (environment: '1' | '2') => {
   if (environment === '2') {
@@ -34,15 +35,31 @@ const getSriUrls = (environment: '1' | '2') => {
 
 
 export async function generateEInvoiceAction(orderId: string, allProducts: Product[]): Promise<{ success: boolean; message?: string; pdfBuffer?: Buffer; }> {
+  const client = await getClient();
   try {
+    await client.query('BEGIN');
+
+    // Lock the store_config row for update to prevent race conditions on nextInvoiceNumber
+    const configRes = await client.query('SELECT * FROM store_config WHERE id = 1 FOR UPDATE');
+    if (configRes.rows.length === 0) {
+        throw new Error("Configuración de la tienda no encontrada.");
+    }
+    const storeConfig: StoreConfig = { ...configRes.rows[0], address: { ...configRes.rows[0].address, ruc: configRes.rows[0].ruc }, baseUrl: 'https://shop.hacktrickstore.com' };
+
     const order = await getOrderByIdFromDb(orderId);
-    const storeConfig = await getStoreConfigFromDb();
 
     if (!order) throw new Error("Pedido no encontrado.");
     if (!storeConfig.isEInvoicingEnabled) throw new Error("La facturación electrónica no está habilitada.");
     if (!storeConfig.eSignatureFile) throw new Error("La firma electrónica no está configurada.");
     if (!process.env.E_SIGNATURE_PASSWORD) throw new Error("La contraseña de la firma electrónica no está configurada.");
     if (order.eInvoiceStatus === 'AUTHORIZED') throw new Error("Este pedido ya tiene una factura autorizada.");
+
+    // --- Reserva e incrementa el secuencial ---
+    const usedSequential = String(storeConfig.nextInvoiceNumber).padStart(9, '0');
+    // Incrementa inmediatamente para evitar reutilización en caso de error posterior
+    const newNextInvoiceNumber = storeConfig.nextInvoiceNumber + 1;
+    await client.query('UPDATE store_config SET "nextInvoiceNumber" = $1 WHERE id = 1', [newNextInvoiceNumber]);
+    // -----------------------------------------
 
     // Fecha/hora "ahora" en Ecuador (America/Guayaquil)
     const emissionDate = new Date(
@@ -51,8 +68,6 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
 
     const sriUrls = getSriUrls(storeConfig.eInvoicingEnvironment);
     const taxRateCode = storeConfig.taxRate === 12 ? '2' : (storeConfig.taxRate === 15 ? '4' : '0');
-    
-    const usedSequential = String(storeConfig.nextInvoiceNumber).padStart(9, '0');
 
     const invoiceData = {
         infoTributaria: {
@@ -199,7 +214,7 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
             ? mensajes.mensaje[0]
             : mensajes?.mensaje;
           const errorMessage = mensaje?.informacionAdicional || 'No autorizado.';
-          await query(
+          await client.query(
             'UPDATE orders SET "eInvoiceStatus" = $1, "eInvoiceAuthorization" = $2 WHERE id = $3',
             ['REJECTED', JSON.stringify(mensajes || null), orderId]
           );
@@ -209,14 +224,10 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
         const authorizationNumber =
           authorization.numeroAutorizacion || resp?.claveAccesoConsultada || accessKey;
 
-        await query('UPDATE orders SET "eInvoiceStatus" = $1, "eInvoiceAuthorization" = $2 WHERE id = $3', ['AUTHORIZED', authorizationNumber, orderId]);
+        await client.query('UPDATE orders SET "eInvoiceStatus" = $1, "eInvoiceAuthorization" = $2 WHERE id = $3', ['AUTHORIZED', authorizationNumber, orderId]);
         
-        // Fetch the latest config again before updating to avoid race conditions
-        const latestStoreConfig = await getStoreConfigFromDb();
-        await updateStoreConfigInDb({ ...latestStoreConfig, nextInvoiceNumber: latestStoreConfig.nextInvoiceNumber + 1 });
-
         const pdfBuffer = await generateRidePdf(order, storeConfig, authorizationNumber, allProducts, usedSequential);
-        
+        await client.query('COMMIT');
         revalidatePath('/admin/pedidos');
         return { success: true, pdfBuffer };
 
@@ -227,9 +238,14 @@ export async function generateEInvoiceAction(orderId: string, allProducts: Produ
     }
     
   } catch (error) {
+    await client.query('ROLLBACK');
     const message = error instanceof Error ? error.message : 'Ocurrió un error desconocido.';
     console.error("E-Invoice Error:", message);
-    await query('UPDATE orders SET "eInvoiceStatus" = $1, "eInvoiceAuthorization" = $2 WHERE id = $3', ['ERROR', message, orderId]);
+    await client.query('UPDATE orders SET "eInvoiceStatus" = $1, "eInvoiceAuthorization" = $2 WHERE id = $3', ['ERROR', message, orderId]);
     return { success: false, message };
+  } finally {
+      client.release();
   }
 }
+
+

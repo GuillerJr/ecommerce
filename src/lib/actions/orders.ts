@@ -12,6 +12,7 @@ import { getClient } from '../db.server';
 import { generateEInvoiceAction } from './einvoice';
 import { getStoreConfigFromDb } from '../data/store';
 import { getProductsFromDb } from '../data/products';
+import { generateRidePdf } from '../einvoice/ride';
 
 
 export async function checkStockAction(items: CartItem[]): Promise<{ success: boolean; message?: string }> {
@@ -76,10 +77,22 @@ export async function createOrderAction(orderData: { userId?: string, customerNa
                 const eInvoiceResult = await generateEInvoiceAction(order.id, allProducts);
                 if (eInvoiceResult.success && eInvoiceResult.pdfBuffer) {
                     eInvoicePdfBuffer = eInvoiceResult.pdfBuffer;
+                } else {
+                  console.error("E-Invoice generation failed, generating generic receipt.", eInvoiceResult.message);
+                  const allProducts = await getProductsFromDb();
+                  const sequentialNumber = (await query<{nextInvoiceNumber: number}>('SELECT "nextInvoiceNumber" FROM store_config WHERE id=1'))[0].nextInvoiceNumber - 1;
+                  eInvoicePdfBuffer = await generateRidePdf(order, storeConfig, null, allProducts, String(sequentialNumber).padStart(9, '0'));
                 }
-            } catch (eInvoiceError) {
-                console.error(`Failed to generate e-invoice for order ${order.id}:`, eInvoiceError);
+            } catch (eInvoiceError: any) {
+                console.error(`Failed to generate e-invoice for order ${order.id}:`, eInvoiceError.message);
+                 const allProducts = await getProductsFromDb();
+                 const sequentialNumber = (await query<{nextInvoiceNumber: number}>('SELECT "nextInvoiceNumber" FROM store_config WHERE id=1'))[0].nextInvoiceNumber - 1;
+                 eInvoicePdfBuffer = await generateRidePdf(order, storeConfig, null, allProducts, String(sequentialNumber).padStart(9, '0'));
             }
+        } else {
+             const allProducts = await getProductsFromDb();
+             const sequentialNumber = (await query<{nextInvoiceNumber: number}>('SELECT "nextInvoiceNumber" FROM store_config WHERE id=1'))[0].nextInvoiceNumber - 1;
+             eInvoicePdfBuffer = await generateRidePdf(order, storeConfig, null, allProducts, String(sequentialNumber).padStart(9, '0'));
         }
         // --- End E-Invoice Generation ---
 
@@ -93,8 +106,9 @@ export async function createOrderAction(orderData: { userId?: string, customerNa
         revalidatePath('/admin/dashboard');
         return { success: true, order: JSON.parse(JSON.stringify(order)) };
     } catch (error) {
-        console.error("Error creating order in createOrderAction:", error);
-        return { success: false, message: 'Error al crear el pedido' };
+        const errorMessage = error instanceof Error ? error.message : 'Ocurrió un error desconocido.';
+        console.error("Error creating order in createOrderAction:", errorMessage);
+        return { success: false, message: `Error al crear el pedido: ${errorMessage}` };
     }
 }
 

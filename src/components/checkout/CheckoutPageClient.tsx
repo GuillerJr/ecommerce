@@ -187,11 +187,48 @@ export default function CheckoutPageClient({ storeConfig }: { storeConfig: Store
     addressForm.reset();
   };
   
-  const handlePaypalSuccess = useCallback(() => {
-    toast({ title: "Pedido Realizado", description: "¡Gracias por tu compra! Tu pago ha sido procesado." });
-    clearCart();
-    router.push('/pedidos');
-  }, [toast, clearCart, router]);
+  const handlePaypalSuccess = useCallback(async () => {
+    if (!selectedAddress || !storeConfig || !user) {
+        toast({ title: "Error", description: "Falta información para completar el pedido.", variant: "destructive" });
+        return;
+    }
+
+    let phoneNumber: string | undefined;
+    if (user.phone && typeof user.phone === 'string') {
+        try {
+            const phoneObj = JSON.parse(user.phone);
+            phoneNumber = `${phoneObj.countryCode}${phoneObj.number}`;
+        } catch (e) {
+            console.error('Error parsing phone JSON from user object:', e);
+            phoneNumber = undefined;
+        }
+    }
+
+    const orderDetails = {
+        userId: user.id,
+        customerName: form.getValues('name'),
+        email: form.getValues('email'),
+        phone: phoneNumber,
+        identification: user.identification,
+        shippingAddress: selectedAddress,
+        paymentMethod: 'PayPal' as const
+    };
+
+    const result = await createOrderAction(
+        orderDetails,
+        cartItems,
+        storeConfig.taxRate || 0,
+        appliedCoupon?.code
+    );
+
+    if (result.success) {
+        toast({ title: "Pedido Realizado", description: "¡Gracias por tu compra! Tu pago ha sido procesado." });
+        clearCart();
+        router.push('/pedidos');
+    } else {
+        toast({ title: "Error en el pedido", description: result.message, variant: "destructive" });
+    }
+  }, [selectedAddress, storeConfig, user, form, cartItems, appliedCoupon?.code, toast, clearCart, router]);
   
   const handleContinueToPayment = async () => {
     setIsVerifyingStock(true);
@@ -359,27 +396,7 @@ export default function CheckoutPageClient({ storeConfig }: { storeConfig: Store
                                                 toast({ title: "Error en el pago", description: "No se pudo capturar el pago de PayPal.", variant: "destructive" });
                                                 return;
                                               }
-                                              
-                                              const orderDetails = { 
-                                                    userId: user.id,
-                                                    customerName: form.getValues('name'), 
-                                                    email: form.getValues('email'), 
-                                                    phone: user?.phone ? `${'${user.phone.countryCode}'}${'${user.phone.number}'}` : 'N/A',
-                                                    identification: user?.identification,
-                                                    shippingAddress: selectedAddress,
-                                                    paymentMethod: 'PayPal' as const
-                                                };
-                                              const result = await createOrderAction(
-                                                  orderDetails,
-                                                  cartItems,
-                                                  storeConfig.taxRate || 0,
-                                                  appliedCoupon?.code
-                                              );
-                                              if (result.success) {
-                                                  handlePaypalSuccess();
-                                              } else {
-                                                  toast({ title: "Error en el pedido", description: result.message, variant: "destructive" });
-                                              }
+                                              await handlePaypalSuccess();
                                           }}
                                           onError={(err) => {
                                               console.error("PayPal Buttons Error:", err);
