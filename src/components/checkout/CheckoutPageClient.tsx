@@ -194,10 +194,14 @@ export default function CheckoutPageClient({ storeConfig }: { storeConfig: Store
     }
 
     let phoneNumber: string | undefined;
-    if (user.phone && typeof user.phone === 'string') {
+    if (user.phone) {
+        let phoneObj;
         try {
-            const phoneObj = JSON.parse(user.phone);
-            phoneNumber = `${phoneObj.countryCode}${phoneObj.number}`;
+            // Si user.phone es un string JSON, lo parseamos. Si ya es un objeto, lo usamos directamente.
+            phoneObj = typeof user.phone === 'string' ? JSON.parse(user.phone) : user.phone;
+            if (phoneObj && phoneObj.countryCode && phoneObj.number) {
+              phoneNumber = `${phoneObj.countryCode}${phoneObj.number}`;
+            }
         } catch (e) {
             console.error('Error parsing phone JSON from user object:', e);
             phoneNumber = undefined;

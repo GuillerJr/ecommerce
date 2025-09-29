@@ -83,7 +83,7 @@ export async function updateOrderStatusInDb(orderId: string, newStatus: OrderSta
     }
 }
 
-export async function createOrderInDb(orderData: any, items: any[], taxRate: number, couponCode?: string): Promise<Order> {
+export async function createOrderInDb(orderData: { userId?: string, customerName: string, email: string, phone?: string, identification?: string, shippingAddress?: any, paymentMethod: 'PayPal' | 'Transferencia Bancaria' | 'Punto de Venta'}, items: any[], taxRate: number, couponCode?: string): Promise<Order> {
     const client = await getClient();
     try {
         await client.query('BEGIN');

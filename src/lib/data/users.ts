@@ -74,7 +74,7 @@ export async function updateUserInDb(user: User): Promise<User | null> {
             '"recentlyViewed" = $13', 'permissions = $14'
         ];
         let values: any[] = [
-            name, email, identification, JSON.stringify(phone), roleId, status, 
+            name, email, identification, phone, roleId, status,
             JSON.stringify(addresses || []), JSON.stringify(cart || []), resetPasswordToken, 
             resetPasswordExpires, verificationToken, verificationTokenExpires, 
             JSON.stringify(recentlyViewed || []), JSON.stringify(permissions || {})
