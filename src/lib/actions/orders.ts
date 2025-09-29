@@ -8,7 +8,7 @@ import { revalidatePath } from 'next/cache';
 import { logActivity } from '../data/activity';
 import { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } from '../email.server';
 import { getUserById } from '../data/users';
-import { getClient } from '../db.server';
+import { getClient, query } from '../db.server';
 import { generateEInvoiceAction } from './einvoice';
 import { getStoreConfigFromDb } from '../data/store';
 import { getProductsFromDb } from '../data/products';
@@ -86,13 +86,11 @@ export async function createOrderAction(orderData: { userId?: string, customerNa
             } catch (eInvoiceError: any) {
                 console.error(`Failed to generate e-invoice for order ${order.id}:`, eInvoiceError.message);
                  const allProducts = await getProductsFromDb();
-                 const sequentialNumber = (await query<{nextInvoiceNumber: number}>('SELECT "nextInvoiceNumber" FROM store_config WHERE id=1'))[0].nextInvoiceNumber - 1;
-                 eInvoicePdfBuffer = await generateRidePdf(order, storeConfig, null, allProducts, String(sequentialNumber).padStart(9, '0'));
+                 eInvoicePdfBuffer = await generateRidePdf(order, storeConfig, null, allProducts, order.id.substring(0,9));
             }
         } else {
              const allProducts = await getProductsFromDb();
-             const sequentialNumber = (await query<{nextInvoiceNumber: number}>('SELECT "nextInvoiceNumber" FROM store_config WHERE id=1'))[0].nextInvoiceNumber - 1;
-             eInvoicePdfBuffer = await generateRidePdf(order, storeConfig, null, allProducts, String(sequentialNumber).padStart(9, '0'));
+             eInvoicePdfBuffer = await generateRidePdf(order, storeConfig, null, allProducts, order.id.substring(0,9));
         }
         // --- End E-Invoice Generation ---
 

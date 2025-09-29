@@ -31,28 +31,37 @@ export async function generateRidePdf(
     doc.text(storeConfig.address.street, 14, 40);
     doc.text(`${storeConfig.address.city}, ${storeConfig.address.country}`, 14, 45);
 
-    // RIDE Box Section
     const rideBoxX = 110;
     const rideBoxY = 15;
-    doc.rect(rideBoxX, rideBoxY, 85, 40);
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('FACTURA', rideBoxX + 5, rideBoxY + 7);
-
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`No. 001-001-${usedSequential}`, rideBoxX + 5, rideBoxY + 14);
 
     if (authorizationNumber) {
+        // RIDE Box Section for authorized e-invoice
+        doc.rect(rideBoxX, rideBoxY, 85, 40);
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('FACTURA', rideBoxX + 5, rideBoxY + 7);
+
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`No. 001-001-${usedSequential}`, rideBoxX + 5, rideBoxY + 14);
+
         doc.setFontSize(7);
         doc.text('NÚMERO DE AUTORIZACIÓN:', rideBoxX + 5, rideBoxY + 21);
         doc.text(authorizationNumber, rideBoxX + 5, rideBoxY + 25, { maxWidth: 75 });
         doc.text(`AMBIENTE: ${storeConfig.eInvoicingEnvironment === '1' ? 'PRUEBAS' : 'PRODUCCIÓN'}`, rideBoxX + 5, rideBoxY + 33);
         doc.text('EMISIÓN: NORMAL', rideBoxX + 5, rideBoxY + 37);
     } else {
-        doc.setFontSize(8);
+        // Simple receipt info when e-invoicing is off or failed
+        doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
-        doc.text('Comprobante de Venta Sin Validez Tributaria', rideBoxX + 5, rideBoxY + 25);
+        doc.text('Comprobante de Venta', rideBoxX + 5, rideBoxY + 7);
+
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Nro. de Pedido: ${order.id.substring(0, 8)}`, rideBoxX + 5, rideBoxY + 14);
+
+        doc.setFontSize(8);
+        doc.text('Este documento no es una factura autorizada.', rideBoxX + 5, rideBoxY + 25);
     }
     
 
