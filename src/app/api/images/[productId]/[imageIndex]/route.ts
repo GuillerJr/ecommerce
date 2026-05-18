@@ -3,9 +3,10 @@ import { getProductById } from '@/lib/data/products';
 
 export async function GET(
   request: Request,
-  { params }: { params: { productId: string; imageIndex: string } }
+  context: { params: Promise<{ productId: string; imageIndex: string }> }
 ) {
   try {
+    const params = await context.params;
     const productId = params.productId;
     const imageIndex = params.imageIndex;
     const index = parseInt(imageIndex, 10);
@@ -20,7 +21,7 @@ export async function GET(
       return new NextResponse('Producto no encontrado', { status: 404 });
     }
 
-    const allImages = [product.image, ...product.images].filter(Boolean);
+    const allImages = [product.image, ...(product.images || [])].filter(Boolean);
     const imageUri = allImages[index];
 
     if (!imageUri) {
