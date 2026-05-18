@@ -8,6 +8,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import { revalidatePath } from 'next/cache';
 import { clearSessionCookie, getCurrentUser, requireUser, setSessionCookie, toPublicUser } from '@/lib/auth/session';
+import { checkRateLimit, getClientRateLimitKey } from '@/lib/rate-limit';
 
 type LoginCredentials = {
   email: string;
@@ -27,6 +28,16 @@ type RegisterCredentials = {
 
 export async function loginAction(credentials: LoginCredentials) {
     try {
+        const rateLimit = await checkRateLimit({
+            key: await getClientRateLimitKey('login', credentials.email || 'unknown'),
+            limit: 5,
+            windowMs: 15 * 60 * 1000,
+        });
+
+        if (!rateLimit.allowed) {
+            return { success: false, message: `Demasiados intentos. Inténtalo de nuevo en ${rateLimit.retryAfterSeconds} segundos.` };
+        }
+
         if (!credentials.password) {
             return { success: false, message: 'La contraseña es requerida.' };
         }
@@ -73,6 +84,16 @@ export async function logoutAction() {
 
 export async function registerAction(credentials: RegisterCredentials) {
     try {
+        const rateLimit = await checkRateLimit({
+            key: await getClientRateLimitKey('register', credentials.email || 'unknown'),
+            limit: 3,
+            windowMs: 60 * 60 * 1000,
+        });
+
+        if (!rateLimit.allowed) {
+            return { success: false, message: `Demasiadas solicitudes. Inténtalo de nuevo en ${rateLimit.retryAfterSeconds} segundos.` };
+        }
+
         if (!credentials.password) {
             return { success: false, message: 'La contraseña es requerida.' };
         }
@@ -135,6 +156,16 @@ export async function verifyEmailAction(token: string) {
 
 export async function requestPasswordResetAction(email: string) {
     try {
+        const rateLimit = await checkRateLimit({
+            key: await getClientRateLimitKey('password-reset-request', email || 'unknown'),
+            limit: 3,
+            windowMs: 60 * 60 * 1000,
+        });
+
+        if (!rateLimit.allowed) {
+            return { success: true };
+        }
+
         const user = await getUserByEmail(email);
 
         if (user) {
@@ -154,6 +185,16 @@ export async function requestPasswordResetAction(email: string) {
 
 export async function resetPasswordAction(token: string, newPassword: string) {
     try {
+        const rateLimit = await checkRateLimit({
+            key: await getClientRateLimitKey('password-reset', token || 'unknown'),
+            limit: 5,
+            windowMs: 15 * 60 * 1000,
+        });
+
+        if (!rateLimit.allowed) {
+            return { success: false, message: `Demasiados intentos. Inténtalo de nuevo en ${rateLimit.retryAfterSeconds} segundos.` };
+        }
+
         const user = await getUserByResetTokenFromDb(token);
 
         if (!user) {
@@ -181,6 +222,16 @@ export async function changePasswordAction(userId: string, currentPassword_raw: 
         const currentUser = await requireUser();
         if (currentUser.id !== userId) {
             return { success: false, message: 'No autorizado.' };
+        }
+
+        const rateLimit = await checkRateLimit({
+            key: await getClientRateLimitKey('change-password', currentUser.id),
+            limit: 5,
+            windowMs: 15 * 60 * 1000,
+        });
+
+        if (!rateLimit.allowed) {
+            return { success: false, message: `Demasiados intentos. Inténtalo de nuevo en ${rateLimit.retryAfterSeconds} segundos.` };
         }
 
         const user = await getUserByEmail(currentUser.email);
