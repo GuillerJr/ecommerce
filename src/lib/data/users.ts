@@ -10,21 +10,22 @@ import { getRoleById } from './roles';
 import bcrypt from 'bcrypt';
 
 export async function getUsers(): Promise<User[]> {
-    const result = await query<any>('SELECT u.*, r.name as role_name FROM users u LEFT JOIN roles r ON u."roleId" = r.id ORDER BY u.name');
+    const result = await query<any>('SELECT u.*, r.name as role_name, r.permissions as role_permissions FROM users u LEFT JOIN roles r ON u."roleId" = r.id ORDER BY u.name');
     return result.map(row => ({
         ...row,
         role: row.role_name || 'user',
+        permissions: row.permissions || row.role_permissions || {},
     }));
 }
 
 export async function getUserById(id: string): Promise<User | null> {
-    const result = await query<any>('SELECT u.*, r.name as role_name FROM users u LEFT JOIN roles r ON u."roleId" = r.id WHERE u.id = $1', [id]);
+    const result = await query<any>('SELECT u.*, r.name as role_name, r.permissions as role_permissions FROM users u LEFT JOIN roles r ON u."roleId" = r.id WHERE u.id = $1', [id]);
     const row = result[0];
     if (!row) return null;
     return {
         ...row,
         role: row.role_name || 'user',
-        permissions: row.permissions || {},
+        permissions: row.permissions || row.role_permissions || {},
     };
 }
 

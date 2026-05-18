@@ -48,7 +48,10 @@ export default async function GiveawaysPage() {
   // Obtiene los sorteos activos, todos los productos (para mostrar premios) y todos los usuarios (para mostrar ganadores).
   const giveaways = (await getGiveaways()).filter(g => g.status !== 'Inactivo');
   const products = await getProducts();
-  const users = await getUsers();
+  const winnerIds = new Set(giveaways.map(g => g.winnerId).filter(Boolean));
+  const users = (await getUsers())
+    .filter(user => winnerIds.has(user.id))
+    .map(user => ({ id: user.id, name: user.name }));
 
   // Utiliza Suspense para mostrar un estado de carga mientras se obtienen los datos.
   return (

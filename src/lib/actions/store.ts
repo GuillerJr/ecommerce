@@ -6,7 +6,7 @@ import type { StoreConfig } from '@/types';
 import { getStoreConfigFromDb, updateStoreConfigInDb } from '@/lib/data/store';
 import { logActivity } from '../data/activity';
 import { revalidatePath } from 'next/cache';
-import { getUserById } from '../data/users';
+import { requirePermission } from '@/lib/auth/session';
 
 export async function getStoreConfigAction() {
     try {
@@ -20,8 +20,7 @@ export async function getStoreConfigAction() {
 
 export async function updateStoreConfigAction(config: Omit<StoreConfig, 'id'>, userId: string) {
     try {
-        const user = await getUserById(userId);
-        if (!user) throw new Error("User not found");
+        const user = await requirePermission('manage_store_settings');
 
         const oldConfig = await getStoreConfigFromDb();
         
@@ -44,7 +43,7 @@ export async function updateStoreConfigAction(config: Omit<StoreConfig, 'id'>, u
         }
 
         if (Object.keys(changes).length > 0) {
-            await logActivity({ userId, userName: user.name, action: 'update', entityType: 'StoreConfig', entityId: '1', details: changes });
+            await logActivity({ userId: user.id, userName: user.name, action: 'update', entityType: 'StoreConfig', entityId: '1', details: changes });
         }
 
         revalidatePath('/admin/tienda');

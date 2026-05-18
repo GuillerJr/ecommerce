@@ -10,11 +10,12 @@ import {
     getDiscounts 
 } from '@/lib/data/discounts';
 import { getProductById } from '@/lib/data/products';
-import { sendNewDiscountNotificationEmail } from '@/lib/email.server';
 import { revalidatePath } from 'next/cache';
+import { requirePermission } from '@/lib/auth/session';
 
 export async function addDiscountAction(discountData: Omit<Discount, 'id' | 'uses'>) {
     try {
+        await requirePermission('manage_discounts');
         const discount = await addDiscountToDb(discountData);
         revalidatePath('/admin/descuentos');
 
@@ -37,6 +38,7 @@ export async function addDiscountAction(discountData: Omit<Discount, 'id' | 'use
 
 export async function updateDiscountAction(discount: Discount) {
     try {
+        await requirePermission('manage_discounts');
         const existingDiscount = await getDiscountById(discount.id);
         const wasInactive = existingDiscount ? existingDiscount.status === 'Inactivo' : false;
 
@@ -61,6 +63,7 @@ export async function updateDiscountAction(discount: Discount) {
 
 export async function deleteDiscountAction(id: string): Promise<{ success: boolean; message?: string; }> {
     try {
+        await requirePermission('manage_discounts');
         await deleteDiscountFromDb(id);
         revalidatePath('/admin/descuentos');
         return { success: true };

@@ -3,11 +3,11 @@
 
 import { getUserByEmail, getUserByResetTokenFromDb, getUserByVerificationToken } from '@/lib/data/auth';
 import { updateUserInDb, addUserToDb } from '@/lib/data/users';
-import { getRoleById } from '@/lib/data/roles';
 import { sendPasswordResetEmail, sendAccountVerificationEmail } from '@/lib/email.server';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import { revalidatePath } from 'next/cache';
+import { clearSessionCookie, getCurrentUser, requireUser, setSessionCookie, toPublicUser } from '@/lib/auth/session';
 
 type LoginCredentials = {
   email: string;
@@ -46,8 +46,8 @@ export async function loginAction(credentials: LoginCredentials) {
                 return { success: false, message: 'Tu cuenta está inactiva. Contacta con soporte.' };
             }
             
-            const { password, ...user } = userData;
-            return { success: true, user: JSON.parse(JSON.stringify(user)) };
+            await setSessionCookie(userData);
+            return { success: true, user: JSON.parse(JSON.stringify(toPublicUser(userData))) };
         } else {
             return { success: false, message: 'El correo electrónico o la contraseña son incorrectos.' };
         }
@@ -55,6 +55,20 @@ export async function loginAction(credentials: LoginCredentials) {
         console.error("Login error:", error);
         return { success: false, message: 'Ocurrió un error en el servidor.' };
     }
+}
+
+export async function getCurrentUserAction() {
+    try {
+        const user = await getCurrentUser();
+        return { success: true, user: user ? JSON.parse(JSON.stringify(user)) : null };
+    } catch (error) {
+        return { success: false, user: null, message: 'No se pudo obtener la sesión.' };
+    }
+}
+
+export async function logoutAction() {
+    await clearSessionCookie();
+    return { success: true };
 }
 
 export async function registerAction(credentials: RegisterCredentials) {
@@ -164,7 +178,12 @@ export async function resetPasswordAction(token: string, newPassword: string) {
 
 export async function changePasswordAction(userId: string, currentPassword_raw: string, newPassword_raw: string) {
     try {
-        const user = await getUserByEmail(userId); // getUserByEmail now fetches by email, need a getUserById
+        const currentUser = await requireUser();
+        if (currentUser.id !== userId) {
+            return { success: false, message: 'No autorizado.' };
+        }
+
+        const user = await getUserByEmail(currentUser.email);
         if (!user || !user.password) {
             return { success: false, message: 'Usuario no encontrado.' };
         }

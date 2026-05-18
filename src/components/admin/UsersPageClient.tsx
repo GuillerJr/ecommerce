@@ -471,6 +471,5 @@ export default function UsersPageClient({ initialUsers }: UsersPageClientProps) 
               </AlertDialogContent>
             </AlertDialog>
         </div>
-    )
-
-    
+    );
+}

@@ -133,7 +133,6 @@ export type Permission =
   | 'manage_products'
   | 'manage_inventory'
   | 'manage_import_export'
-  | 'manage_tournaments'
   | 'manage_categories'
   | 'manage_discounts'
   | 'manage_giveaways'
@@ -316,107 +315,6 @@ export type ActivityLog = {
     entityId?: string;
     details?: Record<string, any>;
     createdAt: string;
-};
-
-// Tournament Types
-export type Tournament = {
-  id: string;
-  name: string;
-  format: 'bracket' | 'league' | 'groups';
-  numberOfTeams: number;
-  rules: {
-    playersPerTeam: number;
-    substitutes: number;
-    yellowCardsForSuspension: number;
-  };
-  groupStageConfig?: {
-    teamsPerGroup: number;
-    teamsAdvancing: number;
-  };
-  status: 'Abierto' | 'En Curso' | 'Finalizado';
-  createdAt: string;
-  startDate: string;
-  endDate?: string | null;
-  championId?: string | null;
-};
-
-export type TournamentTeam = {
-  id: string;
-  tournamentId: string;
-  userId: string; // Captain
-  name: string;
-  status: 'Pendiente' | 'Aprobado' | 'Rechazado';
-  createdAt: string;
-  players: TournamentPlayer[];
-  groupName?: string | null;
-};
-
-export type TournamentPlayer = {
-  id: string;
-  teamId: string;
-  name: string;
-  dorsal: number;
-  position: 'Portero' | 'Defensa' | 'Mediocentro' | 'Delantero';
-};
-
-export type Match = {
-  id: string;
-  tournamentId: string;
-  teamA_Id?: string | null;
-  teamB_Id?: string | null;
-  scoreA?: number | null;
-  scoreB?: number | null;
-  round: string;
-  groupName?: string | null;
-  status: 'Pendiente' | 'En Curso' | 'Finalizado';
-  winnerId?: string | null;
-  nextMatchId?: string | null;
-};
-
-export type MatchEvent = {
-  id: string;
-  matchId: string;
-  teamId: string;
-  playerId: string;
-  type: 'goal' | 'assist' | 'yellow_card' | 'red_card';
-  minute?: number;
-  createdAt: string;
-};
-
-export type Standing = {
-  id: string;
-  tournamentId: string;
-  teamId: string;
-  teamName?: string;
-  groupName?: string | null;
-  points: number;
-  played: number;
-  wins: number;
-  draws: number;
-  losses: number;
-  goalsFor: number;
-  goalsAgainst: number;
-  goalDifference: number;
-};
-
-export type PlayerSanction = {
-  id: string;
-  playerId: string;
-  tournamentId: string;
-  matchId?: string | null;
-  reason: 'double_yellow' | 'direct_red' | 'yellow_accumulation';
-  games: number;
-  gamesServed: number;
-  isActive: boolean;
-};
-
-export type TournamentWithDetails = Tournament & {
-  teams: TournamentTeam[];
-  matches: Match[];
-  standings?: Standing[];
-  events: MatchEvent[];
-  teamsCount?: number;
-  approvedTeamsCount?: number;
 };
 
 export type Suggestion = {

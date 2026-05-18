@@ -53,9 +53,6 @@ const translateEntityType = (entityType: string): string => {
         Coupon: 'Cupón',
         Giveaway: 'Sorteo',
         Role: 'Rol',
-        Tournament: 'Torneo',
-        TournamentTeam: 'Equipo de Torneo',
-        Match: 'Partido',
         StoreConfig: 'Configuración de Tienda',
         NosotrosPage: 'Página Nosotros',
     };

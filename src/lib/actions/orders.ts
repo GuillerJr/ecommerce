@@ -2,7 +2,7 @@
 
 'use server';
 
-import type { Order, OrderStatus, TrackingEvent, Coupon, User, CartItem, Product } from '@/types';
+import type { Order, CartItem } from '@/types';
 import { createOrderInDb, updateOrderStatusInDb, getOrdersFromDb } from '@/lib/data/orders';
 import { revalidatePath } from 'next/cache';
 import { logActivity } from '../data/activity';
@@ -13,6 +13,7 @@ import { generateEInvoiceAction } from './einvoice';
 import { getStoreConfigFromDb } from '../data/store';
 import { getProductsFromDb } from '../data/products';
 import { generateRidePdf } from '../einvoice/ride';
+import { requirePermission, requireUser } from '@/lib/auth/session';
 
 
 export async function checkStockAction(items: CartItem[]): Promise<{ success: boolean; message?: string }> {
@@ -25,7 +26,7 @@ export async function checkStockAction(items: CartItem[]): Promise<{ success: bo
     await client.query('BEGIN');
 
     const stockChecks = items.map(item =>
-      client.query('SELECT name, stock FROM products WHERE id = $1 FOR UPDATE', [item.product.id])
+      client.query('SELECT name, stock, "saleType", status FROM products WHERE id = $1 FOR UPDATE', [item.product.id])
     );
     const results = await Promise.all(stockChecks);
     
@@ -33,15 +34,20 @@ export async function checkStockAction(items: CartItem[]): Promise<{ success: bo
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      if (item.product.saleType === 'stock') {
-        const productRes = results[i];
-        if (productRes.rows.length === 0) {
-          insufficientStockItems.push(`${item.product.name} (no encontrado)`);
-          continue;
-        }
-        const currentStock = productRes.rows[0].stock;
-        if (currentStock < item.quantity) {
-          insufficientStockItems.push(`${item.product.name} (solicitado: ${item.quantity}, disponible: ${currentStock})`);
+      const productRes = results[i];
+      if (productRes.rows.length === 0) {
+        insufficientStockItems.push(`${item.product.name} (no encontrado)`);
+        continue;
+      }
+      const product = productRes.rows[0];
+      if (product.status !== 'Activo') {
+        insufficientStockItems.push(`${product.name} (inactivo)`);
+        continue;
+      }
+      if (product.saleType === 'stock') {
+        const currentStock = product.stock;
+        if (!Number.isInteger(Number(item.quantity)) || Number(item.quantity) <= 0 || currentStock < item.quantity) {
+          insufficientStockItems.push(`${product.name} (solicitado: ${item.quantity}, disponible: ${currentStock})`);
         }
       }
     }
@@ -65,12 +71,24 @@ export async function checkStockAction(items: CartItem[]): Promise<{ success: bo
 
 export async function createOrderAction(orderData: { userId?: string, customerName: string, email: string, phone?: string, identification?: string, shippingAddress?: any, paymentMethod: 'PayPal' | 'Transferencia Bancaria' | 'Punto de Venta'}, items: any[], taxRate: number, couponCode?: string) {
     try {
-        const order = await createOrderInDb(orderData, items, taxRate, couponCode);
+        const currentUser = await requireUser();
+        const storeConfig = await getStoreConfigFromDb();
+        const isPosSale = orderData.paymentMethod === 'Punto de Venta';
+        if (isPosSale) {
+            await requirePermission('manage_pos');
+        }
+        const trustedOrderData = {
+            ...orderData,
+            userId: isPosSale ? orderData.userId : currentUser.id,
+            email: isPosSale ? orderData.email : currentUser.email,
+            customerName: isPosSale ? orderData.customerName : currentUser.name,
+            identification: isPosSale ? orderData.identification : currentUser.identification,
+        };
+        const order = await createOrderInDb(trustedOrderData, items, storeConfig.taxRate || 0, couponCode);
         
         let eInvoicePdfBuffer: Buffer | undefined;
 
         // --- E-Invoice Generation ---
-        const storeConfig = await getStoreConfigFromDb();
         if (storeConfig.isEInvoicingEnabled) {
             try {
                 const allProducts = await getProductsFromDb();
@@ -112,6 +130,7 @@ export async function createOrderAction(orderData: { userId?: string, customerNa
 
 export async function updateOrderStatusAction(orderId: string, newStatus: Order['status'], adminUserId: string) {
     try {
+        const adminUser = await requirePermission('manage_orders');
         const order = await updateOrderStatusInDb(orderId, newStatus);
         
         if (!order) {
@@ -127,13 +146,8 @@ export async function updateOrderStatusAction(orderId: string, newStatus: Order[
         revalidatePath('/admin/pedidos');
         revalidatePath('/admin/dashboard');
         
-        const adminUser = await getUserById(adminUserId);
-        if (!adminUser) {
-            throw new Error("Admin user not found for logging activity.");
-        }
-
         await logActivity({
-            userId: adminUserId,
+            userId: adminUser.id,
             userName: adminUser.name,
             action: 'update_status',
             entityType: 'Order',
@@ -150,8 +164,12 @@ export async function updateOrderStatusAction(orderId: string, newStatus: Order[
 
 export async function getOrdersAction() {
     try {
+        const currentUser = await requireUser();
         const orders = await getOrdersFromDb();
-        return { success: true, orders: JSON.parse(JSON.stringify(orders)) };
+        const visibleOrders = currentUser.permissions?.all || currentUser.permissions?.manage_orders || currentUser.role !== 'user'
+            ? orders
+            : orders.filter(order => order.userId === currentUser.id);
+        return { success: true, orders: JSON.parse(JSON.stringify(visibleOrders)) };
     } catch (error) {
         return { success: false, message: 'Error al obtener los pedidos' };
     }

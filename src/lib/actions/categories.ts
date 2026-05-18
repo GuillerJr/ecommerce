@@ -12,9 +12,11 @@ import {
     getSubcategories
 } from '@/lib/data/categories';
 import { revalidatePath } from 'next/cache';
+import { requirePermission } from '@/lib/auth/session';
 
 export async function addCategoryAction(categoryData: Omit<Category, 'id' | 'status'>) {
   try {
+    await requirePermission('manage_categories');
     const category = await addCategoryToDb(categoryData);
     revalidatePath('/admin/categorias');
     return { success: true, category };
@@ -25,6 +27,7 @@ export async function addCategoryAction(categoryData: Omit<Category, 'id' | 'sta
 
 export async function updateCategoryAction(category: Category) {
   try {
+    await requirePermission('manage_categories');
     await updateCategoryInDb(category);
     revalidatePath('/admin/categorias');
     return { success: true, category };
@@ -35,6 +38,7 @@ export async function updateCategoryAction(category: Category) {
 
 export async function deleteCategoryAction(id: string): Promise<{ success: boolean; message?: string; }> {
     try {
+        await requirePermission('manage_categories');
         await deleteCategoryFromDb(id);
         revalidatePath('/admin/categorias');
         return { success: true };
@@ -45,6 +49,7 @@ export async function deleteCategoryAction(id: string): Promise<{ success: boole
 
 export async function addSubcategoryAction(subcategoryData: Omit<Subcategory, 'id'|'status'>) {
     try {
+        await requirePermission('manage_categories');
         const subcategory = await addSubcategoryToDb(subcategoryData);
         revalidatePath('/admin/subcategorias');
         return { success: true, subcategory };
@@ -55,6 +60,7 @@ export async function addSubcategoryAction(subcategoryData: Omit<Subcategory, 'i
 
 export async function updateSubcategoryAction(subcategory: Subcategory) {
     try {
+        await requirePermission('manage_categories');
         await updateSubcategoryInDb(subcategory);
         revalidatePath('/admin/subcategorias');
         return { success: true, subcategory };
@@ -65,6 +71,7 @@ export async function updateSubcategoryAction(subcategory: Subcategory) {
 
 export async function deleteSubcategoryAction(id: string): Promise<{ success: boolean; message?: string; }> {
     try {
+        await requirePermission('manage_categories');
         await deleteSubcategoryFromDb(id);
         revalidatePath('/admin/subcategorias');
         return { success: true };

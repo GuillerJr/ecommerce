@@ -2,7 +2,6 @@
 'use server';
 
 import { getProductById } from '@/lib/data/products';
-import { getTournamentDetailsFromDb as getTournamentDetails } from '@/lib/data/tournaments';
 import { getCategoryBySubcategoryId } from '@/lib/data/categories';
 
 type BreadcrumbItem = {
@@ -19,11 +18,6 @@ const segmentLabels: Record<string, string> = {
     productos: 'Productos',
     inventario: 'Añadir Stock',
     'importar-exportar': 'Importar/Exportar',
-    torneos: 'Torneos',
-    liga: 'Liga',
-    grupos: 'Grupos',
-    eliminatoria: 'Eliminatoria',
-    partido: 'Partido',
     categorias: 'Categorías',
     subcategorias: 'Subcategorías',
     marcas: 'Marcas',
@@ -69,16 +63,6 @@ export async function getAdminBreadcrumbData(pathname: string): Promise<{ succes
         currentPath += `/${segment}`;
         let label = segmentLabels[segment] || segment;
 
-        // Lógica para obtener nombres dinámicos
-        if (segments.indexOf(segment) > 1 && (segments[segments.indexOf(segment) - 2] === 'torneos')) {
-             if(segment !== 'liga' && segment !== 'grupos' && segment !== 'eliminatoria' && segment !== 'partido') {
-                const tournament = await getTournamentDetails(segment);
-                if (tournament) {
-                    label = tournament.name;
-                }
-             }
-        }
-        
         breadcrumbs.push({ label, href: currentPath });
     }
 

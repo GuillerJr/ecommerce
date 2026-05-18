@@ -1,16 +1,15 @@
 
 'use server';
 
-import type { NosotrosPageConfig, User } from '@/types';
+import type { NosotrosPageConfig } from '@/types';
 import { getNosotrosPageConfig, updateNosotrosPageConfigInDb } from '@/lib/data/nosotros';
 import { revalidatePath } from 'next/cache';
 import { logActivity } from '../data/activity';
-import { getUserById } from '../data/users';
+import { requirePermission } from '@/lib/auth/session';
 
 export async function updateNosotrosPageConfigAction(config: NosotrosPageConfig, userId: string) {
     try {
-        const user = await getUserById(userId);
-        if (!user) throw new Error("User not found");
+        const user = await requirePermission('manage_store_settings');
         
         const oldConfig = await getNosotrosPageConfig();
 
@@ -27,7 +26,7 @@ export async function updateNosotrosPageConfigAction(config: NosotrosPageConfig,
             }
         }
         
-        await logActivity({ userId, userName: user.name, action: 'update', entityType: 'NosotrosPage', entityId: '1' });
+        await logActivity({ userId: user.id, userName: user.name, action: 'update', entityType: 'NosotrosPage', entityId: '1' });
 
         return { success: true };
     } catch (error) {

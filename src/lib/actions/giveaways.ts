@@ -13,6 +13,7 @@ import {
 } from '@/lib/data/giveaways';
 import { sendGiveawayWinnerEmail } from '@/lib/email.server';
 import { revalidatePath } from 'next/cache';
+import { requirePermission, requireUser } from '@/lib/auth/session';
 
 export async function getGiveawaysAction() {
     try {
@@ -25,6 +26,7 @@ export async function getGiveawaysAction() {
 
 export async function addGiveawayAction(giveawayData: Omit<Giveaway, 'id' | 'status' | 'winnerId' | 'participants'>) {
     try {
+        await requirePermission('manage_giveaways');
         await addGiveawayToDb(giveawayData);
         revalidatePath('/admin/sorteos');
         revalidatePath('/sorteos');
@@ -36,6 +38,7 @@ export async function addGiveawayAction(giveawayData: Omit<Giveaway, 'id' | 'sta
 
 export async function updateGiveawayAction(giveaway: Giveaway) {
     try {
+        await requirePermission('manage_giveaways');
         await updateGiveawayInDb(giveaway);
         revalidatePath('/admin/sorteos');
         revalidatePath('/sorteos');
@@ -47,6 +50,7 @@ export async function updateGiveawayAction(giveaway: Giveaway) {
 
 export async function deleteGiveawayAction(id: string): Promise<{ success: boolean; message?: string; }> {
     try {
+        await requirePermission('manage_giveaways');
         await deleteGiveawayFromDb(id);
         revalidatePath('/admin/sorteos');
         revalidatePath('/sorteos');
@@ -58,7 +62,9 @@ export async function deleteGiveawayAction(id: string): Promise<{ success: boole
 
 export async function participateInGiveawayAction(giveawayId: string, userId: string) {
     try {
-        const result = await addParticipantToGiveawayInDb(giveawayId, userId);
+        const currentUser = await requireUser();
+        if (currentUser.id !== userId) return { success: false, message: 'No autorizado.' };
+        const result = await addParticipantToGiveawayInDb(giveawayId, currentUser.id);
         if (result.success) {
             revalidatePath('/sorteos');
         }
@@ -70,6 +76,7 @@ export async function participateInGiveawayAction(giveawayId: string, userId: st
 
 export async function drawWinnerAction(giveawayId: string) {
     try {
+        await requirePermission('manage_giveaways');
         const giveaway = await getGiveawayById(giveawayId);
         if (!giveaway) return { success: false, message: 'Sorteo no encontrado.' };
 

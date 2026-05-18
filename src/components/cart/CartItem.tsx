@@ -10,9 +10,10 @@ import { Minus, Plus, Trash2 } from 'lucide-react';
 
 interface CartItemProps {
   item: CartItem;
+  readOnly?: boolean;
 }
 
-export default function CartItem({ item }: CartItemProps) {
+export default function CartItem({ item, readOnly = false }: CartItemProps) {
   const { updateQuantity, removeFromCart } = useCart();
 
   const handleQuantityChange = (newQuantity: number) => {
@@ -67,7 +68,7 @@ export default function CartItem({ item }: CartItemProps) {
           </div>
         </div>
 
-        <div className="flex items-center justify-between mt-2">
+        {!readOnly && <div className="flex items-center justify-between mt-2">
            <div className="flex items-center border rounded-md">
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange(item.quantity - 1)}>
               <Minus className="w-3 h-3" />
@@ -80,7 +81,7 @@ export default function CartItem({ item }: CartItemProps) {
           <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive" onClick={() => removeFromCart(item.id)}>
               <Trash2 className="h-4 w-4" />
           </Button>
-        </div>
+        </div>}
       </div>
     </div>
   );

@@ -14,10 +14,12 @@ import { es } from 'date-fns/locale';
 import Image from 'next/image';
 import { Gift, Ticket, User as UserIcon, Check, Loader2, Users, ShoppingBag } from 'lucide-react';
 
+type PublicWinner = Pick<User, 'id' | 'name'>;
+
 interface GiveawaysPageClientProps {
     initialGiveaways: Giveaway[];
     allProducts: Product[];
-    allUsers: User[];
+    allUsers: PublicWinner[];
 }
 
 export default function GiveawaysPageClient({ initialGiveaways, allProducts, allUsers }: GiveawaysPageClientProps) {

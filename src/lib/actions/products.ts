@@ -10,7 +10,6 @@ import {
     getProductsFromDb,
     getProductById
 } from '@/lib/data/products';
-import { getUserById } from '@/lib/data/users';
 import { getClient } from '@/lib/db.server';
 import { revalidatePath } from 'next/cache';
 import { sendNewProductNotificationEmail } from '../email.server';
@@ -18,16 +17,17 @@ import { logActivity } from '../data/activity';
 import sharp from 'sharp';
 import ExcelJS from 'exceljs';
 import { v4 as uuidv4 } from 'uuid';
+import { requirePermission } from '@/lib/auth/session';
 
-export async function addProductAction(product: Product, user: User) {
+export async function addProductAction(product: Product, user?: User) {
     try {
+        const currentUser = await requirePermission('manage_products');
         const newProduct = await addProductToDb(product);
         revalidatePath('/admin/productos');
         revalidatePath('/tienda');
         revalidatePath('/');
-        const { password, ...userToLog } = user; // Exclude sensitive info
         const { reviews, seller, ...productToLog } = newProduct; // Exclude bulky info
-        await logActivity({ userId: user.id, userName: user.name, action: 'create', entityType: 'Product', entityId: newProduct.id, details: productToLog });
+        await logActivity({ userId: currentUser.id, userName: currentUser.name, action: 'create', entityType: 'Product', entityId: newProduct.id, details: productToLog });
         await sendNewProductNotificationEmail(newProduct);
         return { success: true, product: newProduct };
     } catch (error) {
@@ -35,8 +35,9 @@ export async function addProductAction(product: Product, user: User) {
     }
 }
 
-export async function updateProductAction(productData: Product, user: User) {
+export async function updateProductAction(productData: Product, user?: User) {
     try {
+        const currentUser = await requirePermission('manage_products');
         const oldProduct = await getProductById(productData.id);
         if (!oldProduct) throw new Error("Product not found");
 
@@ -58,7 +59,7 @@ export async function updateProductAction(productData: Product, user: User) {
         }
         
         if (Object.keys(changes).length > 0) {
-            await logActivity({ userId: user.id, userName: user.name, action: 'update', entityType: 'Product', entityId: productData.id, details: changes });
+            await logActivity({ userId: currentUser.id, userName: currentUser.name, action: 'update', entityType: 'Product', entityId: productData.id, details: changes });
         }
         
         return { success: true };
@@ -69,8 +70,8 @@ export async function updateProductAction(productData: Product, user: User) {
 
 export async function deleteProductAction(id: string, userId: string): Promise<{ success: boolean; message?: string; }> {
     try {
+        const user = await requirePermission('manage_products');
         const product = await getProductById(id);
-        const user = await getUserById(userId);
         if (!product || !user) return { success: false, message: 'Producto o usuario no encontrado' };
         await deleteProductFromDb(id);
         revalidatePath('/admin/productos');
@@ -95,15 +96,19 @@ export async function getProductsAction() {
 export async function addStockAction(productId: string, quantity: number, notes: string) {
     const client = await getClient();
     try {
+        await requirePermission('manage_inventory');
+        if (!Number.isInteger(quantity) || quantity <= 0) {
+            throw new Error('La cantidad debe ser un entero positivo.');
+        }
         await client.query('BEGIN');
-        const productRes = await client.query('SELECT name, stock FROM products WHERE id = $1', [productId]);
+        const productRes = await client.query('SELECT name, stock FROM products WHERE id = $1 FOR UPDATE', [productId]);
         if (productRes.rows.length === 0) {
             throw new Error("Producto no encontrado.");
         }
         const product = productRes.rows[0];
         const newStock = product.stock + quantity;
 
-        await client.query('UPDATE products SET stock = $1 WHERE id = $2', [newStock, productId]);
+        await client.query('UPDATE products SET stock = stock + $1 WHERE id = $2', [quantity, productId]);
         await client.query(
             'INSERT INTO kardex ("productId", "productName", date, type, quantity, balance, notes) VALUES ($1, $2, $3, $4, $5, $6, $7)',
             [productId, product.name, new Date(), 'Entrada', quantity, newStock, notes]
@@ -124,6 +129,7 @@ export async function addStockAction(productId: string, quantity: number, notes:
 }
 
 export async function optimizeImage(dataUrl: string): Promise<string> {
+    await requirePermission('manage_products');
     const base64 = dataUrl.split(',')[1];
     if (!base64) throw new Error('URL de datos inválida');
 
@@ -144,6 +150,7 @@ export async function optimizeImage(dataUrl: string): Promise<string> {
 
 export async function exportProductsToXlsx() {
     try {
+        await requirePermission('manage_import_export');
         const products = await getProductsFromDb();
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Stock');
@@ -170,6 +177,7 @@ export async function exportProductsToXlsx() {
 export async function importProductStockFromXlsx(base64Data: string) {
     const client = await getClient();
     try {
+        await requirePermission('manage_import_export');
         await client.query('BEGIN');
         
         const buffer = Buffer.from(base64Data, 'base64');
@@ -196,7 +204,7 @@ export async function importProductStockFromXlsx(base64Data: string) {
             const stock = parseInt(row.getCell(stockCol).value?.toString() || '0', 10);
             
             if (id && !isNaN(stock) && stock >= 0) {
-                const productRes = await client.query('SELECT stock, name FROM products WHERE id = $1', [id]);
+                const productRes = await client.query('SELECT stock, name FROM products WHERE id = $1 FOR UPDATE', [id]);
                 if (productRes.rows.length > 0) {
                     const currentProduct = productRes.rows[0];
                     const quantityChange = stock - currentProduct.stock;
@@ -229,6 +237,7 @@ export async function importProductStockFromXlsx(base64Data: string) {
 export async function importProductsFromXlsx(base64Data: string, userId: string) {
     const client = await getClient();
     try {
+        const user = await requirePermission('manage_import_export');
         await client.query('BEGIN');
         
         const buffer = Buffer.from(base64Data, 'base64');
@@ -246,9 +255,6 @@ export async function importProductsFromXlsx(base64Data: string, userId: string)
         const brandMap = new Map<string, string>();
         const brandRes = await client.query("SELECT id, name FROM brands");
         brandRes.rows.forEach(r => brandMap.set(r.name.toLowerCase(), r.id));
-
-        const user = await getUserById(userId);
-        if (!user) throw new Error("User not found");
 
         let createdCount = 0;
         const headers = (worksheet.getRow(1).values as string[]).filter(Boolean);
@@ -321,6 +327,7 @@ export async function importProductsFromXlsx(base64Data: string, userId: string)
 
 export async function generateProductsXlsxTemplate(): Promise<{ success: boolean; data?: string; message?: string }> {
     try {
+        await requirePermission('manage_import_export');
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Plantilla de Productos');
         

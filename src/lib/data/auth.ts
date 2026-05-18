@@ -5,12 +5,13 @@ import { query } from '@/lib/db.server';
 import type { User } from '@/types';
 
 export async function getUserByEmail(email: string): Promise<User | null> {
-    const result = await query<any>('SELECT u.*, r.name as role_name FROM users u LEFT JOIN roles r ON u."roleId" = r.id WHERE email = $1', [email.toLowerCase()]);
+    const result = await query<any>('SELECT u.*, r.name as role_name, r.permissions as role_permissions FROM users u LEFT JOIN roles r ON u."roleId" = r.id WHERE email = $1', [email.toLowerCase()]);
     const row = result[0];
     if (!row) return null;
     return {
         ...row,
         role: row.role_name || 'user',
+        permissions: row.permissions || row.role_permissions || {},
     };
 }
 

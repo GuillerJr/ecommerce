@@ -92,7 +92,7 @@ export default function CheckoutPageClient({ storeConfig }: { storeConfig: Store
   const [isVerifyingStock, setIsVerifyingStock] = useState(false);
 
   const subtotal = totalPrice;
-  const priceAfterDiscount = subtotal - couponDiscount;
+  const priceAfterDiscount = Math.max(0, subtotal - couponDiscount);
   
   const taxAmount = useMemo(() => {
     if (!storeConfig || !storeConfig.taxRate) return 0;
@@ -104,7 +104,7 @@ export default function CheckoutPageClient({ storeConfig }: { storeConfig: Store
   }, [cartItems]);
 
 
-  const finalPrice = priceAfterDiscount + taxAmount;
+  const finalPrice = Math.max(0, priceAfterDiscount + taxAmount);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -143,6 +143,14 @@ export default function CheckoutPageClient({ storeConfig }: { storeConfig: Store
     }
   }, [selectedAddressId, user?.addresses, form]);
 
+  useEffect(() => {
+    if (!appliedCoupon) return;
+    const discount = appliedCoupon.type === 'Porcentaje' && appliedCoupon.value
+      ? subtotal * (appliedCoupon.value / 100)
+      : appliedCoupon.value || 0;
+    setCouponDiscount(Math.min(discount, subtotal));
+  }, [appliedCoupon, subtotal]);
+
   const selectedAddress = useMemo(() => {
     if (!selectedAddressId || !user?.addresses) return null;
     return user.addresses.find(a => a.id === selectedAddressId);
@@ -159,7 +167,7 @@ export default function CheckoutPageClient({ storeConfig }: { storeConfig: Store
       } else if (coupon.type === 'Fijo' && coupon.value) {
         discount = coupon.value;
       }
-      setCouponDiscount(discount);
+      setCouponDiscount(Math.min(discount, totalPrice));
       setAppliedCoupon(coupon);
       toast({ title: "Cupón aplicado", description: `Se ha aplicado el cupón ${coupon.code}.` });
     } else {
@@ -424,7 +432,7 @@ export default function CheckoutPageClient({ storeConfig }: { storeConfig: Store
                         <CardContent className="space-y-4 pt-6">
                             <div className="space-y-4">
                                 {cartItems.map(item => (
-                                    <CartItem key={item.id} item={item} />
+                                    <CartItem key={item.id} item={item} readOnly={isPaymentStep} />
                                 ))}
                             </div>
                             <Separator />
@@ -447,9 +455,9 @@ export default function CheckoutPageClient({ storeConfig }: { storeConfig: Store
                                         <span>-{couponDiscount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
                                     </div>
                                 )}
-                                {storeConfig && storeConfig.taxRate > 0 && (
+                                {storeConfig && (storeConfig.taxRate || 0) > 0 && (
                                     <div className="flex justify-between">
-                                        <span>IVA ({storeConfig.taxRate}%)</span>
+                                        <span>IVA ({storeConfig.taxRate || 0}%)</span>
                                         <span>{taxAmount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
                                     </div>
                                 )}

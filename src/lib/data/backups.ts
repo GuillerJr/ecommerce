@@ -6,7 +6,7 @@ import { query } from '@/lib/db.server';
 
 export async function createSqlDumpFromDb(): Promise<{ filename: string; content: string }> {
     // Esta es una exportación simplificada para demostración. Para un backup real, usa pg_dump.
-    const tablesToBackup = ['products', 'categories', 'subcategories', 'discounts', 'coupons', 'orders', 'users', 'roles', 'giveaways', 'kardex', 'store_config', 'nosotros_page', 'brands', 'activity_logs', 'tournaments', 'tournament_teams', 'tournament_players', 'matches', 'player_sanctions'];
+    const tablesToBackup = ['products', 'categories', 'subcategories', 'discounts', 'coupons', 'orders', 'users', 'roles', 'giveaways', 'kardex', 'store_config', 'nosotros_page', 'brands', 'activity_logs'];
     let sqlContent = '';
 
     for (const table of tablesToBackup) {

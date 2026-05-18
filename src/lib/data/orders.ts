@@ -7,6 +7,9 @@ import { query } from '@/lib/db.server';
 import { getClient } from '@/lib/db.server';
 import { v4 as uuidv4 } from 'uuid';
 
+const PATCH_PRICE = 5;
+const NAME_NUMBER_PRICE = 5;
+
 /**
  * Convierte una fila de la base de datos en un objeto Order.
  * Asegura que los campos JSONB y las convenciones de nomenclatura se manejen correctamente.
@@ -88,25 +91,62 @@ export async function createOrderInDb(orderData: { userId?: string, customerName
     try {
         await client.query('BEGIN');
 
+        if (!Array.isArray(items) || items.length === 0) {
+            throw new Error('El pedido no contiene productos.');
+        }
+
+        const trustedItems: Array<{ productId: string; productName: string; quantity: number; price: number; saleType: string; customization: any }> = [];
+
         // Lock and check stock for all products in the cart
         for (const item of items) {
-            if (item.product.saleType === 'stock') {
-                const productRes = await client.query('SELECT name, stock FROM products WHERE id = $1 FOR UPDATE', [item.product.id]);
-                if (productRes.rows.length === 0) {
-                    throw new Error(`El producto "${item.product.name}" ya no está disponible.`);
-                }
-                const currentStock = productRes.rows[0].stock;
-                if (currentStock < item.quantity) {
-                    throw new Error(`Stock insuficiente para "${item.product.name}". Disponible: ${currentStock}, solicitado: ${item.quantity}.`);
-                }
+            const productId = item?.product?.id;
+            const quantity = Number(item?.quantity);
+            if (!productId || !Number.isInteger(quantity) || quantity <= 0) {
+                throw new Error('El carrito contiene cantidades inválidas.');
             }
+
+            const productRes = await client.query('SELECT id, name, price, stock, "saleType", status, "customizationOptions" FROM products WHERE id = $1 FOR UPDATE', [productId]);
+            if (productRes.rows.length === 0) {
+                throw new Error('Uno de los productos ya no está disponible.');
+            }
+
+            const product = productRes.rows[0];
+            if (product.status !== 'Activo') {
+                throw new Error(`El producto "${product.name}" no está activo.`);
+            }
+
+            if (product.saleType === 'stock' && product.stock < quantity) {
+                throw new Error(`Stock insuficiente para "${product.name}". Disponible: ${product.stock}, solicitado: ${quantity}.`);
+            }
+
+            const customization = item.customization || {};
+            const customizationOptions = product.customizationOptions || {};
+            if (customization.patches && !customizationOptions.patches) {
+                throw new Error(`El producto "${product.name}" no permite parches.`);
+            }
+            if (customization.nameAndNumber && !customizationOptions.nameAndNumber) {
+                throw new Error(`El producto "${product.name}" no permite nombre y dorsal.`);
+            }
+
+            const unitPrice = Number(product.price)
+                + (customization.patches ? PATCH_PRICE : 0)
+                + (customization.nameAndNumber ? NAME_NUMBER_PRICE : 0);
+
+            trustedItems.push({
+                productId: product.id,
+                productName: product.name,
+                quantity,
+                price: unitPrice,
+                saleType: product.saleType,
+                customization,
+            });
         }
         
-        let subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        let subtotal = trustedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
         let discountAmount = 0;
         let coupon: Coupon | null = null;
         if (couponCode) {
-            const couponResult = await client.query('SELECT * FROM coupons WHERE code = $1 AND status = \'Activo\' AND ("expiryDate" IS NULL OR "expiryDate" > NOW()) AND ("maxUses" IS NULL OR uses < "maxUses")', [couponCode]);
+            const couponResult = await client.query('SELECT * FROM coupons WHERE code = $1 AND status = \'Activo\' AND ("expiryDate" IS NULL OR "expiryDate" > NOW()) AND ("maxUses" IS NULL OR uses < "maxUses") FOR UPDATE', [couponCode]);
             coupon = couponResult.rows[0];
             if (coupon) {
                 if (coupon.type === 'Fijo') {
@@ -118,7 +158,8 @@ export async function createOrderInDb(orderData: { userId?: string, customerName
         }
         
         const priceAfterDiscount = subtotal - discountAmount;
-        const taxAmount = taxRate > 0 ? priceAfterDiscount * (taxRate / 100) : 0;
+        const normalizedTaxRate = Number.isFinite(Number(taxRate)) && taxRate > 0 ? taxRate : 0;
+        const taxAmount = normalizedTaxRate > 0 ? Math.max(0, priceAfterDiscount) * (normalizedTaxRate / 100) : 0;
         const total = Math.max(0, priceAfterDiscount + taxAmount);
 
         const orderId = uuidv4();
@@ -151,13 +192,13 @@ export async function createOrderInDb(orderData: { userId?: string, customerName
             new Date(), 
             subtotal, 
             discountAmount, 
-            taxRate, 
+            normalizedTaxRate, 
             taxAmount, 
             couponCode, 
             total, 
             initialStatus, 
-            JSON.stringify(items.map(i => ({ 
-                productId: i.product.id, 
+            JSON.stringify(trustedItems.map(i => ({ 
+                productId: i.productId, 
                 quantity: i.quantity, 
                 price: i.price, 
                 customization: i.customization 
@@ -169,12 +210,12 @@ export async function createOrderInDb(orderData: { userId?: string, customerName
         const result = await client.query<any>(queryText, values);
         
         // Now update stock and kardex for all items
-        for (const item of items) {
-            if (item.product.saleType === 'stock') {
-                const productRes = await client.query('SELECT stock FROM products WHERE id = $1', [item.product.id]);
+        for (const item of trustedItems) {
+            if (item.saleType === 'stock') {
+                const productRes = await client.query('SELECT stock FROM products WHERE id = $1', [item.productId]);
                 const newStock = productRes.rows[0].stock - item.quantity;
-                await client.query('UPDATE products SET stock = $1 WHERE id = $2', [newStock, item.product.id]);
-                await client.query('INSERT INTO kardex ("productId", "productName", date, type, quantity, balance, notes) VALUES ($1, $2, $3, $4, $5, $6, $7)', [item.product.id, item.product.name, new Date(), 'Salida', item.quantity, newStock, `Venta - Pedido #${orderId.substring(0,8)}`]);
+                await client.query('UPDATE products SET stock = $1 WHERE id = $2', [newStock, item.productId]);
+                await client.query('INSERT INTO kardex ("productId", "productName", date, type, quantity, balance, notes) VALUES ($1, $2, $3, $4, $5, $6, $7)', [item.productId, item.productName, new Date(), 'Salida', item.quantity, newStock, `Venta - Pedido #${orderId.substring(0,8)}`]);
             }
         }
         

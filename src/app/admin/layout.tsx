@@ -12,7 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton, SidebarInset, SidebarFooter, SidebarTrigger } from '@/components/ui/sidebar';
-import { Home, Package, LayoutGrid, ListTree, Tag, Ticket, Users, Star, History, ClipboardList, Store, Gift, Info, Tablet, ShieldAlert, Boxes, Database, Award, UploadCloud, FileClock, UserCog, Trophy, ChevronDown, Archive, Sun, Moon, Lightbulb } from 'lucide-react';
+import { Home, Package, LayoutGrid, ListTree, Tag, Ticket, Users, Star, History, ClipboardList, Store, Gift, Info, Tablet, ShieldAlert, Boxes, Database, Award, UploadCloud, FileClock, UserCog, ChevronDown, Archive, Sun, Moon, Lightbulb } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -27,23 +27,13 @@ import { useTheme } from 'next-themes';
 import { Toaster } from '@/components/ui/toaster';
 
 // Definición de las secciones y sus permisos requeridos
-const navItems = [
+const navItems: Array<any> = [
     { href: '/admin/dashboard', label: 'Dashboard', icon: Home, permission: 'view_dashboard' },
     { href: '/admin/pos', label: 'Punto de Venta', icon: Tablet, permission: 'manage_pos' },
     { href: '/admin/pedidos', label: 'Pedidos', icon: ClipboardList, permission: 'manage_orders' },
     { href: '/admin/productos', label: 'Productos', icon: Package, permission: 'manage_products' },
     { href: '/admin/inventario', label: 'Añadir Stock', icon: Boxes, permission: 'manage_inventory' },
     { href: '/admin/importar-exportar', label: 'Importar/Exportar', icon: UploadCloud, permission: 'manage_import_export' },
-    { 
-        label: 'Torneos', 
-        icon: Trophy, 
-        permission: 'manage_tournaments',
-        subItems: [
-             { href: '/admin/torneos/liga', label: 'Liga' },
-             { href: '/admin/torneos/grupos', label: 'Grupos' },
-             { href: '/admin/torneos/eliminatoria', label: 'Eliminatoria' },
-        ]
-    },
     { href: '/admin/categorias', label: 'Categorías', icon: LayoutGrid, permission: 'manage_categories' },
     { href: '/admin/subcategorias', label: 'Subcategorías', icon: ListTree, permission: 'manage_categories' },
     { href: '/admin/marcas', label: 'Marcas', icon: Award, permission: 'manage_categories' },
@@ -116,7 +106,7 @@ function AdminLayoutClient({ children }: { children: React.ReactNode }) {
     );
     
     // Verifica si el usuario tiene permiso para la ruta actual
-    const currentTopLevelItem = navItems.find(item => item.href ? pathname.startsWith(item.href) : (item.subItems && item.subItems.some(sub => pathname.startsWith(sub.href))));
+    const currentTopLevelItem = navItems.find(item => item.href ? pathname.startsWith(item.href) : (item.subItems && item.subItems.some((sub: any) => pathname.startsWith(sub.href))));
     const hasAccessToCurrentPage = user.permissions?.all || (currentTopLevelItem?.permission && user.permissions?.[currentTopLevelItem.permission]);
 
 
@@ -169,7 +159,7 @@ function AdminLayoutClient({ children }: { children: React.ReactNode }) {
                     <SidebarMenu>
                          {visibleNavItems.map((item) => (
                             item.subItems ? (
-                                <Collapsible key={item.label} defaultOpen={item.subItems.some(sub => pathname.startsWith(sub.href))}>
+                                <Collapsible key={item.label} defaultOpen={item.subItems.some((sub: any) => pathname.startsWith(sub.href))}>
                                     <SidebarMenuItem>
                                         <CollapsibleTrigger asChild>
                                             <SidebarMenuButton tooltip={item.label} className="justify-between">
@@ -183,7 +173,7 @@ function AdminLayoutClient({ children }: { children: React.ReactNode }) {
                                     </SidebarMenuItem>
                                     <CollapsibleContent>
                                         <SidebarMenuSub>
-                                            {item.subItems.map(subItem => (
+                                            {item.subItems.map((subItem: any) => (
                                                 <SidebarMenuSubItem key={subItem.href}>
                                                     <SidebarMenuSubButton asChild isActive={pathname.startsWith(subItem.href)}>
                                                         <Link href={subItem.href}>

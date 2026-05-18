@@ -74,7 +74,6 @@ export default function ProductDetailsClient({
   const [quantity, setQuantity] = useState(1);
   const [mainImage, setMainImage] = useState(product.image);
   const [reviews, setReviews] = useState<Review[]>(product.reviews);
-  const [currentPrice, setCurrentPrice] = useState(product.price);
   
   const brand = useMemo(() => {
     if (!product.brandId || !allBrands) return null;
@@ -111,12 +110,11 @@ export default function ProductDetailsClient({
   const showCustomizationSection = allowPatches || allowNameAndNumber;
   const hasSizeOption = product.sizes && product.sizes.length > 0;
 
-  // Actualiza el precio total cuando cambian las opciones de personalización.
-  useMemo(() => {
+  const currentPrice = useMemo(() => {
     let total = basePrice;
     if (customization.patches) total += PATCH_PRICE;
     if (customization.nameAndNumber) total += NAME_NUMBER_PRICE;
-    setCurrentPrice(total);
+    return total;
   }, [basePrice, customization]);
   
   const isAddToCartDisabled = useMemo(() => {
@@ -223,7 +221,7 @@ export default function ProductDetailsClient({
             />
         </div>
         <div className="grid grid-cols-5 gap-2">
-          {[product.image, ...product.images].filter(Boolean).map((img, index) => (
+          {[product.image, ...(product.images || [])].filter(Boolean).map((img, index) => (
             <button
               key={index}
               onClick={() => setMainImage(img)}
@@ -362,7 +360,7 @@ export default function ProductDetailsClient({
                                     <Minus className="w-4 h-4" />
                                 </Button>
                                 <span className="w-12 text-center font-bold">{quantity}</span>
-                                <Button variant="ghost" size="icon" className="h-12" onClick={() => setQuantity(q => q + 1)}>
+                                <Button variant="ghost" size="icon" className="h-12" onClick={() => setQuantity(q => product.saleType === 'stock' ? Math.min(product.stock, q + 1) : q + 1)}>
                                     <Plus className="w-4 h-4" />
                                 </Button>
                             </div>
@@ -442,7 +440,7 @@ export default function ProductDetailsClient({
           </CardHeader>
           <CardContent>
             <ul className="divide-y divide-border">
-              {Object.entries(product.specifications).map(([key, value]) => (
+              {Object.entries(product.specifications || {}).map(([key, value]) => (
                  <li key={key} className="flex justify-between items-center py-3">
                    <span className="text-muted-foreground">{key}</span>
                    <span className="font-medium text-right">{value}</span>

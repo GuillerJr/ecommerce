@@ -70,7 +70,7 @@ export default function ProductsPageClient({ initialProducts, allCategories, all
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const { toast } = useToast();
-    const { user } = useAuth;
+    const { user } = useAuth();
     
     const [searchTerm, setSearchTerm] = useState("");
     const [categoryFilter, setCategoryFilter] = useState("all");

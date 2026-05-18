@@ -32,7 +32,6 @@ const permissionList = [
     { id: 'manage_products', label: 'Gestionar Productos' },
     { id: 'manage_inventory', label: 'Gestionar Inventario (Añadir Stock)' },
     { id: 'manage_import_export', label: 'Gestionar Importar/Exportar' },
-    { id: 'manage_tournaments', label: 'Gestionar Torneos' },
     { id: 'manage_categories', label: 'Gestionar Categorías, Subcategorías y Marcas' },
     { id: 'manage_discounts', label: 'Gestionar Descuentos y Cupones' },
     { id: 'manage_giveaways', label: 'Gestionar Sorteos' },

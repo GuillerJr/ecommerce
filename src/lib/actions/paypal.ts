@@ -36,6 +36,10 @@ async function getPaypalAccessToken() {
 // Action to create a PayPal order
 export async function createPaypalOrderAction(amount: string, currency: string, shippingAddress: Address) {
     try {
+        const numericAmount = Number(amount);
+        if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+            return { success: false, message: 'El monto de PayPal no es válido.' };
+        }
         const accessToken = await getPaypalAccessToken();
         const url = `${process.env.PAYPAL_API_BASE}/v2/checkout/orders`;
 
@@ -50,7 +54,7 @@ export async function createPaypalOrderAction(amount: string, currency: string, 
                 purchase_units: [{
                     amount: {
                         currency_code: currency,
-                        value: amount,
+                        value: numericAmount.toFixed(2),
                     },
                     shipping: {
                         name: {

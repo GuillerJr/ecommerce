@@ -1,16 +1,14 @@
 /**
  * @fileoverview Proveedor de contexto para la autenticación de usuarios.
- * Gestiona el estado del usuario (login, logout, registro), lo almacena en localStorage
- * y proporciona la información de autenticación a toda la aplicación.
- * También sincroniza el estado de la sesión entre pestañas.
+ * Gestiona el estado visual del usuario y sincroniza la sesión validada por el servidor.
  */
 
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User } from '@/types';
-import { loginAction, registerAction, changePasswordAction } from '@/lib/actions/auth';
+import { loginAction, registerAction, changePasswordAction, getCurrentUserAction, logoutAction } from '@/lib/actions/auth';
 import { updateUserAction } from '@/lib/actions/users';
 
 type LoginCredentials = {
@@ -33,7 +31,7 @@ interface AuthContextType {
   user: User | null;
   login: (credentials: LoginCredentials) => Promise<{ success: boolean; message?: string; }>;
   register: (credentials: RegisterCredentials) => Promise<{ success: boolean; message?: string; }>;
-  logout: () => void;
+  logout: () => Promise<void>;
   loading: boolean;
   updateUser: (newUser: User) => Promise<{ success: boolean; message?: string }>;
   updatePassword: (passwords: { currentPassword?: string; newPassword: string }) => Promise<{ success: boolean; message?: string }>;
@@ -42,50 +40,16 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const USER_STORAGE_KEY = 'user';
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Efecto para cargar el usuario desde localStorage al iniciar la aplicación.
+  // Carga la sesión validada por el servidor. localStorage no es una fuente confiable de identidad.
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
-      }
-    } catch (error) {
-      console.error("Failed to parse user from localStorage", error);
-      localStorage.removeItem(USER_STORAGE_KEY);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Efecto para sincronizar el estado de la sesión entre pestañas.
-  useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === USER_STORAGE_KEY) {
-        try {
-            if (event.newValue) {
-                setUser(JSON.parse(event.newValue));
-            } else {
-                // Si el valor es nulo, significa que se cerró sesión en otra pestaña.
-                setUser(null);
-            }
-        } catch (error) {
-             console.error("Failed to sync user state from localStorage", error);
-             setUser(null);
-        }
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
+    getCurrentUserAction()
+      .then(result => setUser(result.user || null))
+      .finally(() => setLoading(false));
   }, []);
 
 
@@ -97,8 +61,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (credentials: LoginCredentials) => {
     const result = await loginAction(credentials);
     if (result.success && result.user) {
-      const userString = JSON.stringify(result.user);
-      localStorage.setItem(USER_STORAGE_KEY, userString);
       setUser(result.user);
     }
     return { success: result.success, message: result.message };
@@ -116,8 +78,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   /**
    * Cierra la sesión del usuario actual.
    */
-  const logout = () => {
-    localStorage.removeItem(USER_STORAGE_KEY);
+  const logout = async () => {
+    await logoutAction();
     setUser(null);
     router.push('/login');
   };
@@ -157,12 +119,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
   
   /**
-   * Sincroniza el estado del usuario en el contexto y en el almacenamiento.
+   * Sincroniza el estado del usuario en el contexto.
    * @param {User} newUser - El nuevo objeto de usuario.
    */
   const syncUser = (newUser: User) => {
-    const userString = JSON.stringify(newUser);
-    localStorage.setItem(USER_STORAGE_KEY, userString);
     setUser(newUser);
   };
 

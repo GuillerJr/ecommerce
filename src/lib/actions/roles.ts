@@ -6,16 +6,16 @@ import type { Role } from '@/types';
 import { addRoleToDb, updateRoleInDb, getRolesFromDb, getRoleById } from '@/lib/data/roles';
 import { revalidatePath } from 'next/cache';
 import { logActivity } from '../data/activity';
-import { getUserById } from '../data/users';
+import { requirePermission } from '@/lib/auth/session';
 
 export async function addRoleAction(roleData: Omit<Role, 'id'>, adminUserId: string) {
     try {
+        const adminUser = await requirePermission('manage_roles');
         const newRole = await addRoleToDb(roleData);
-        const adminUser = await getUserById(adminUserId);
         const { ...roleToLog } = newRole;
         await logActivity({
-            userId: adminUserId,
-            userName: adminUser?.name || 'Sistema',
+            userId: adminUser.id,
+            userName: adminUser.name,
             action: 'create',
             entityType: 'Role',
             entityId: newRole.id,
@@ -30,13 +30,12 @@ export async function addRoleAction(roleData: Omit<Role, 'id'>, adminUserId: str
 
 export async function updateRoleAction(role: Role, adminUserId: string) {
     try {
+        const adminUser = await requirePermission('manage_roles');
         const oldRole = await getRoleById(role.id);
         if (!oldRole) throw new Error("Role not found");
 
         await updateRoleInDb(role);
 
-        const adminUser = await getUserById(adminUserId);
-        
         const changes: Record<string, any> = {};
         for (const key in role) {
             const typedKey = key as keyof Role;
@@ -50,8 +49,8 @@ export async function updateRoleAction(role: Role, adminUserId: string) {
 
         if (Object.keys(changes).length > 0) {
             await logActivity({
-                userId: adminUserId,
-                userName: adminUser?.name || 'Sistema',
+                userId: adminUser.id,
+                userName: adminUser.name,
                 action: 'update',
                 entityType: 'Role',
                 entityId: role.id,

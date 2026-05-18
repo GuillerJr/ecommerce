@@ -3,9 +3,11 @@
 import type { Coupon } from '@/types';
 import { addCouponToDb, updateCouponInDb, deleteCouponFromDb, getCouponByCodeFromDb } from '@/lib/data/coupons';
 import { revalidatePath } from 'next/cache';
+import { requirePermission } from '@/lib/auth/session';
 
 export async function addCouponAction(coupon: Omit<Coupon, 'id' | 'uses'>) {
     try {
+        await requirePermission('manage_discounts');
         await addCouponToDb(coupon);
         revalidatePath('/admin/cupones');
         return { success: true };
@@ -16,6 +18,7 @@ export async function addCouponAction(coupon: Omit<Coupon, 'id' | 'uses'>) {
 
 export async function updateCouponAction(coupon: Coupon) {
     try {
+        await requirePermission('manage_discounts');
         await updateCouponInDb(coupon);
         revalidatePath('/admin/cupones');
         return { success: true, coupon };
@@ -26,6 +29,7 @@ export async function updateCouponAction(coupon: Coupon) {
 
 export async function deleteCouponAction(id: string): Promise<{ success: boolean; message?: string; }> {
     try {
+        await requirePermission('manage_discounts');
         await deleteCouponFromDb(id);
         revalidatePath('/admin/cupones');
         return { success: true };

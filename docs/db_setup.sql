@@ -100,6 +100,7 @@ CREATE TABLE "products" (
 -- Crear la tabla de pedidos
 CREATE TABLE "orders" (
   "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  "userId" UUID REFERENCES "users"("id") ON DELETE SET NULL,
   "customerName" TEXT NOT NULL,
   "email" TEXT NOT NULL,
   "phone" TEXT,

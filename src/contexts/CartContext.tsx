@@ -83,6 +83,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
 
   const addToCart = (product: Product, quantity: number = 1, customization: Customization) => {
+    if (product.saleType === 'stock' && product.stock <= 0) {
+      toast({ title: 'Sin stock', description: 'Este producto no tiene stock disponible.', variant: 'destructive' });
+      return;
+    }
+
     const cartItemId = `${product.id}-${customization.size || ''}-${customization.patches ? 'p' : ''}-${customization.nameAndNumber ? 'n' : ''}-${customization.notes || ''}`;
     
     const discountInfo = calculateDiscountedPrice(product, allDiscounts);
@@ -94,13 +99,17 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setCartItems(prevItems => {
       const existingItem = prevItems.find(item => item.id === cartItemId);
       if (existingItem) {
+        const nextQuantity = product.saleType === 'stock'
+          ? Math.min(product.stock, existingItem.quantity + quantity)
+          : existingItem.quantity + quantity;
         return prevItems.map(item =>
           item.id === cartItemId
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: nextQuantity }
             : item
         );
       }
-      return [...prevItems, { id: cartItemId, product, quantity, price: priceToAdd, customization }];
+      const safeQuantity = product.saleType === 'stock' ? Math.min(product.stock, quantity) : quantity;
+      return [...prevItems, { id: cartItemId, product, quantity: safeQuantity, price: priceToAdd, customization }];
     });
     toast({
       title: "Añadido al carrito",
@@ -158,7 +167,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     } else {
       setCartItems(prevItems =>
         prevItems.map(item =>
-          item.id === cartItemId ? { ...item, quantity } : item
+          item.id === cartItemId
+            ? { ...item, quantity: item.product.saleType === 'stock' ? Math.min(item.product.stock, quantity) : quantity }
+            : item
         )
       );
     }

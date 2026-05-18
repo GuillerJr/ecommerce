@@ -25,8 +25,6 @@ export * from './actions/users';
 export * from './actions/reviews';
 // Exportaciones de acciones de sorteos
 export * from './actions/giveaways';
-// Exportaciones de acciones de torneos
-export * from './actions/tournaments';
 // Exportaciones de acciones de la tienda
 export * from './actions/store';
 // Exportaciones de acciones de la página "Nosotros"

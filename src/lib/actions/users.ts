@@ -15,22 +15,40 @@ import { revalidatePath } from 'next/cache';
 import { getClient } from '../db.server';
 import { logActivity } from '../data/activity';
 import { getRoleById } from '../data/roles';
+import { requirePermission, requireUser, toPublicUser } from '@/lib/auth/session';
 
 export async function updateUserAction(user: User, adminUserId?: string) {
     try {
+        const currentUser = await requireUser();
         const oldUser = await getUserById(user.id);
         if (!oldUser) throw new Error("User not found");
+
+        const isSelfUpdate = currentUser.id === user.id;
+        if (!isSelfUpdate) {
+            await requirePermission('manage_users');
+        }
         
         // Ensure password is not accidentally overwritten with null/undefined
-        const userDataToUpdate: User = { ...user };
+        const userDataToUpdate: User = isSelfUpdate
+            ? {
+                ...oldUser,
+                name: user.name,
+                email: user.email,
+                identification: user.identification,
+                phone: user.phone,
+                addresses: user.addresses,
+                cart: user.cart,
+                recentlyViewed: user.recentlyViewed,
+              }
+            : { ...oldUser, ...user };
         if (!userDataToUpdate.password) {
             delete userDataToUpdate.password;
         }
 
         const updatedUser = await updateUserInDb(userDataToUpdate);
         
-        if (adminUserId) {
-            const adminUser = await getUserById(adminUserId);
+        if (!isSelfUpdate) {
+            const adminUser = currentUser;
             const changes: Record<string, any> = {};
             for (const key in user) {
                 const typedKey = key as keyof User;
@@ -42,12 +60,12 @@ export async function updateUserAction(user: User, adminUserId?: string) {
                 }
             }
             if (Object.keys(changes).length > 0) {
-                 await logActivity({ userId: adminUserId, userName: adminUser?.name || 'Sistema', action: 'update', entityType: 'User', entityId: user.id, details: changes });
+                 await logActivity({ userId: adminUser.id, userName: adminUser.name, action: 'update', entityType: 'User', entityId: user.id, details: changes });
             }
              revalidatePath('/admin/usuarios');
         }
         revalidatePath('/perfil');
-        return { success: true, user: updatedUser };
+        return { success: true, user: updatedUser ? toPublicUser(updatedUser) : null };
     } catch (error) {
         return { success: false, message: 'Error al actualizar usuario' };
     }
@@ -55,12 +73,12 @@ export async function updateUserAction(user: User, adminUserId?: string) {
 
 export async function addUserFromAdminAction(userData: { name: string; email: string; password?: string; roleId: string; status: 'Activo' | 'Inactivo' }, adminUserId: string) {
     try {
+        const adminUser = await requirePermission('manage_users');
         const newUser = await addUserFromAdminToDb(userData);
-        const adminUser = await getUserById(adminUserId);
         const { password, ...userToLog } = userData; // Exclude password from logs
         await logActivity({
-            userId: adminUserId,
-            userName: adminUser?.name || 'Sistema',
+            userId: adminUser.id,
+            userName: adminUser.name,
             action: 'create',
             entityType: 'User',
             entityId: newUser.id,
@@ -76,6 +94,8 @@ export async function addUserFromAdminAction(userData: { name: string; email: st
 
 export async function addAddressAction(userId: string, addressData: Omit<Address, 'id'>) {
     try {
+        const currentUser = await requireUser();
+        if (currentUser.id !== userId) return { success: false, message: 'No autorizado.' };
         const user = await addAddressToDb(userId, addressData);
         revalidatePath('/direcciones');
         revalidatePath('/checkout');
@@ -87,6 +107,8 @@ export async function addAddressAction(userId: string, addressData: Omit<Address
 
 export async function updateAddressAction(userId: string, address: Address) {
     try {
+        const currentUser = await requireUser();
+        if (currentUser.id !== userId) return { success: false, message: 'No autorizado.' };
         const user = await updateAddressInDb(userId, address);
         revalidatePath('/direcciones');
         revalidatePath('/checkout');
@@ -98,6 +120,8 @@ export async function updateAddressAction(userId: string, address: Address) {
 
 export async function deleteAddressAction(userId: string, addressId: string) {
     try {
+        const currentUser = await requireUser();
+        if (currentUser.id !== userId) return { success: false, message: 'No autorizado.' };
         const user = await deleteAddressFromDbInData(userId, addressId);
         revalidatePath('/direcciones');
         revalidatePath('/checkout');
@@ -110,6 +134,8 @@ export async function deleteAddressAction(userId: string, addressId: string) {
 export async function addRecentlyViewedProductAction(userId: string, productId: string) {
   const client = await getClient();
   try {
+    const currentUser = await requireUser();
+    if (currentUser.id !== userId) return { success: false, message: 'No autorizado.' };
     await client.query('BEGIN');
     const userRes = await client.query('SELECT "recentlyViewed" FROM users WHERE id = $1', [userId]);
     if (userRes.rows.length === 0) {
