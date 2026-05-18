@@ -3,8 +3,10 @@
 import { Pool, types } from 'pg';
 import 'dotenv/config';
 
-// Asegurar que las variables de entorno no estén configuradas
-if (!process.env.DB_HOST) {
+const isDbConfigured = Boolean(process.env.DB_HOST && process.env.DB_USER && typeof process.env.DB_PASSWORD === 'string');
+
+// Asegurar que las variables de entorno estén configuradas
+if (!isDbConfigured) {
     console.error("Las variables de entorno de la base de datos no están configuradas. Por favor, revisa tu archivo .env.");
 }
 
@@ -31,6 +33,13 @@ pool.on('error', (err, client) => {
 });
 
 export const query = async <T>(text: string, params: any[] = []): Promise<T[]> => {
+  if (!isDbConfigured) {
+    if (text.trim().toLowerCase().startsWith('select')) {
+      return [];
+    }
+    throw new Error('Las variables de entorno de la base de datos no están configuradas.');
+  }
+
   let client;
   try {
     client = await pool.connect();

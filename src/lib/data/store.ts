@@ -5,7 +5,45 @@
 import type { StoreConfig } from '@/types';
 import { query } from '@/lib/db.server';
 
+const fallbackStoreConfig: StoreConfig = {
+    id: 1,
+    name: 'HackTrickStore',
+    legalName: 'HackTrickStore',
+    description: 'Equipamiento deportivo de alto rendimiento.',
+    logoUrl: '',
+    logoUrlDark: '',
+    baseUrl: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
+    contactEmail: 'hola@hacktrickstore.com',
+    contactPhone: '',
+    address: {
+        street: '',
+        city: '',
+        postalCode: '',
+        country: '',
+        ruc: '',
+    },
+    currency: {
+        code: 'USD',
+        symbol: '$',
+    },
+    socials: {},
+    taxRate: 0,
+    paymentGateways: {
+        paypal: {
+            enabled: false,
+            clientId: process.env.PAYPAL_CLIENT_ID,
+        },
+    },
+    isEInvoicingEnabled: false,
+    nextInvoiceNumber: 1,
+    eInvoicingEnvironment: '1',
+};
+
 export async function getStoreConfigFromDb(): Promise<StoreConfig> {
+    if (!process.env.DB_HOST || !process.env.DB_USER || typeof process.env.DB_PASSWORD !== 'string') {
+        return fallbackStoreConfig;
+    }
+
     const result = await query<any>('SELECT * FROM store_config WHERE id = 1');
     const row = result[0];
     

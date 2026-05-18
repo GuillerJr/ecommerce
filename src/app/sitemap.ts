@@ -3,8 +3,16 @@ import { getStoreConfigFromDb } from '@/lib/data/store';
 import { MetadataRoute } from 'next';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const storeConfig = await getStoreConfigFromDb();
-  const baseUrl = storeConfig.baseUrl;
+  let baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  let products: Awaited<ReturnType<typeof getProductsFromDb>> = [];
+
+  try {
+    const storeConfig = await getStoreConfigFromDb();
+    baseUrl = storeConfig.baseUrl || baseUrl;
+    products = await getProductsFromDb();
+  } catch (error) {
+    console.error('No se pudo generar el sitemap desde la base de datos, usando rutas estáticas.', error);
+  }
 
   // Rutas estáticas
   const staticRoutes = [
@@ -24,7 +32,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // Rutas dinámicas de productos
-  const products = await getProductsFromDb();
   const productRoutes = products
     .filter(product => product.status === 'Activo')
     .map((product) => ({
