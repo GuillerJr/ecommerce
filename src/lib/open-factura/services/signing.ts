@@ -22,7 +22,7 @@ function hexToBase64(hex: string) {
 function bigIntToBase64(bigInt: any) {
   const hex = bigInt.toString(16);
   const hexPairs = hex.match(/\w{2}/g);
-  const bytes = (hexPairs || []).map((pair) => parseInt(pair, 16));
+  const bytes = (hexPairs || []).map((pair: string) => parseInt(pair, 16));
   const byteString = String.fromCharCode(...bytes);
   const base64 = btoa(byteString);
   const formatedBase64 = (base64.match(/.{1,76}/g) || []).join("\n");
@@ -60,9 +60,9 @@ export async function signXml(
         const keyBags  = p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag })[forge.pki.oids.pkcs8ShroudedKeyBag] || [];
         
         if (!keyBags.length) throw new Error('No se encontró clave privada en el .p12');
-        const key = keyBags[0].key!;
+        const key = keyBags[0].key! as any;
         
-        const signerCert = certBags.find(b => b.cert && b.cert.publicKey && b.cert.publicKey.n?.equals(key.n))?.cert
+        const signerCert = certBags.find((b: any) => b.cert && b.cert.publicKey && b.cert.publicKey.n?.equals(key.n))?.cert
                         || certBags[0].cert;
 
         if (!signerCert) throw new Error('No se encontró un certificado de firmante en el .p12');
@@ -73,7 +73,7 @@ export async function signXml(
         
         const certificateX509_pem = forge.pki.certificateToAsn1(signerCert);
         const certificateX509_der = forge.asn1.toDer(certificateX509_pem).getBytes();
-        const hash_certificateX509_der = sha256Base64(certificateX509_der, "binary");
+        const hash_certificateX509_der = sha256Base64(certificateX509_der, "binary" as forge.Encoding);
         
         const issuerName = signerCert.issuer.attributes
           .map(a => `${a.name?.toUpperCase().replace('ORGANIZATIONALUNITNAME','OU').replace('COUNTRYNAME','C').replace('ORGANIZATIONNAME','O').replace('COMMONNAME','CN')}=${a.value}`)
@@ -135,7 +135,8 @@ export async function signXml(
         
         const shaSignedProperties = sha256Base64(signedProperties.replace('<etsi:SignedProperties', `<etsi:SignedProperties ${nameSpaces}`), "utf8");
         
-        const chainPemList = chainCerts.map(c => {
+        const chainPemList = chainCerts.map((c) => {
+          if (!c) return '';
           let pem = forge.pki.certificateToPem(c);
           pem = pem.substring(pem.indexOf("\n")+1, pem.indexOf("\n-----END CERTIFICATE-----"));
           return (pem.replace(/\r?\n|\r/g, "").match(/.{1,76}/g) || []).join("\n");
@@ -143,7 +144,7 @@ export async function signXml(
         const x509Data = [
           `<ds:X509Certificate>${certificateX509}</ds:X509Certificate>`,
           ...chainPemList.map(p => `<ds:X509Certificate>${p}</ds:X509Certificate>`)
-        ].join('');
+        ].filter(Boolean).join('');
 
         const keyInfo =
           `<ds:KeyInfo Id="Certificate${certificateNumber}">` +
