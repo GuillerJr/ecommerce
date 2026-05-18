@@ -56,8 +56,8 @@ export default function Header({ storeConfig }: { storeConfig: StoreConfig }) {
   React.useEffect(() => {
     getCategoriesAndSubcategoriesAction().then(result => {
         if(result.success && result.categories && result.subcategories) {
-            setCategories(result.categories.filter(c => c.status === 'Activo'));
-            setSubcategories(result.subcategories.filter(s => s.status === 'Activo'));
+            setCategories(result.categories.filter((c: Category) => c.status === 'Activo'));
+            setSubcategories(result.subcategories.filter((s: Subcategory) => s.status === 'Activo'));
         }
     })
   }, []);

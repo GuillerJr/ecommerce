@@ -165,7 +165,7 @@ export default function CouponsPageClient({ initialCoupons }: CouponsPageClientP
 
         const result = editingCoupon
             ? await updateCouponAction({ ...editingCoupon, ...couponData })
-            : await addCouponAction({ id: uuidv4(), uses: 0, ...couponData });
+            : await addCouponAction(couponData);
         
         if (result.success) {
             toast({ title: editingCoupon ? "Cupón actualizado" : "Cupón creado" });

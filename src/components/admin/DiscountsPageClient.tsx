@@ -161,9 +161,14 @@ export default function DiscountsPageClient({ initialDiscounts, allProducts }: D
     };
 
     const onSubmit = async (data: DiscountFormValues) => {
+      const discountData = {
+        ...data,
+        maxUses: data.maxUses ?? null,
+        endDate: data.endDate?.toISOString(),
+      };
       const result = editingDiscount ? 
-        await updateDiscountAction({ ...editingDiscount, ...data, endDate: data.endDate?.toISOString() }) :
-        await addDiscountAction({...data, endDate: data.endDate?.toISOString()});
+        await updateDiscountAction({ ...editingDiscount, ...discountData }) :
+        await addDiscountAction(discountData);
 
       if (result.success) {
         toast({ title: editingDiscount ? "Descuento actualizado" : "Descuento creado" });
@@ -485,7 +490,7 @@ export default function DiscountsPageClient({ initialDiscounts, allProducts }: D
                                     <PopoverContent className="w-auto p-0" align="start">
                                     <Calendar
                                         mode="single"
-                                        selected={field.value}
+                                        selected={field.value || undefined}
                                         onSelect={(date) => field.onChange(date)}
                                         disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
                                         initialFocus

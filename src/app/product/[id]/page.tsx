@@ -84,7 +84,7 @@ async function ProductPageContent({ id }: { id: string }) {
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
       <ProductDetailsClient
         product={product}
-        category={category}
+        category={category || undefined}
         allDiscounts={discounts}
         storeConfig={storeConfig}
         allBrands={allBrands}

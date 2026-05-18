@@ -48,7 +48,7 @@ const permissionsSchema = z.object(
   permissionList.reduce((acc, p) => {
     acc[p.id] = z.boolean().default(false);
     return acc;
-  }, {} as Record<string, z.ZodBoolean>)
+  }, {} as Record<string, z.ZodDefault<z.ZodBoolean>>)
 ).merge(z.object({ all: z.boolean().default(false) })).default({});
 
 const roleSchema = z.object({
@@ -158,9 +158,10 @@ export default function RolesPageClient({ initialRoles }: RolesPageClientProps) 
             return;
         }
 
+        const roleData = data as Omit<Role, 'id'>;
         const action = editingRole 
-            ? updateRoleAction({ ...editingRole, ...data }, user.id) 
-            : addRoleAction(data, user.id);
+            ? updateRoleAction({ ...editingRole, ...roleData }, user.id) 
+            : addRoleAction(roleData, user.id);
 
         const result = await action;
         if(result.success) {

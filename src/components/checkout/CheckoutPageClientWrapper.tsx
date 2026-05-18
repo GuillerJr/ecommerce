@@ -2,6 +2,7 @@
 'use client';
 
 import { PayPalScriptProvider } from "@paypal/react-paypal-js";
+import type { ReactPayPalScriptOptions } from "@paypal/react-paypal-js";
 import CheckoutPageClient from "./CheckoutPageClient";
 import type { StoreConfig } from "@/types";
 
@@ -9,7 +10,8 @@ export default function CheckoutPageClientWrapper({ storeConfig }: { storeConfig
   const paypalClientId = storeConfig?.paymentGateways?.paypal?.clientId;
 
   if (paypalClientId) {
-      const paypalOptions = {
+      const paypalOptions: ReactPayPalScriptOptions = {
+          clientId: paypalClientId,
           "client-id": paypalClientId,
           currency: storeConfig.currency.code || "USD",
           components: 'buttons',

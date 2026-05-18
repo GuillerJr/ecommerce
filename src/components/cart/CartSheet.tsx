@@ -51,9 +51,9 @@ export default function CartSheet({ storeConfig, setSheetOpen }: CartSheetProps)
                         <span>Subtotal</span>
                         <span>${totalPrice.toFixed(2)}</span>
                     </div>
-                    {storeConfig.taxRate > 0 && (
+                    {(storeConfig.taxRate || 0) > 0 && (
                         <div className="flex justify-between">
-                            <span>IVA ({storeConfig.taxRate}%)</span>
+                            <span>IVA ({storeConfig.taxRate || 0}%)</span>
                             <span>${taxAmount.toFixed(2)}</span>
                         </div>
                     )}

@@ -330,8 +330,8 @@ export default function TiendaPageClient({
                     max={maxPrice}
                     step={1}
                     value={localPriceRange}
-                    onValueChange={setLocalPriceRange}
-                    onValueCommit={handlePriceCommit}
+                    onValueChange={(value) => setLocalPriceRange(value as [number, number])}
+                    onValueCommit={(value) => handlePriceCommit(value as [number, number])}
                     className="mt-2"
                 />
                 </div>

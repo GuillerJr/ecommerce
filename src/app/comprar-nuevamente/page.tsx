@@ -72,7 +72,7 @@ export default function ComprarNuevamentePage() {
                 getBrandsAction()
             ]).then(([ordersResult, productsResult, discountsResult, brandsResult]) => {
                 if (ordersResult.success && ordersResult.orders) {
-                    setOrders(ordersResult.orders.filter(o => o.email === user.email));
+                    setOrders(ordersResult.orders.filter((o: Order) => o.email === user.email));
                 }
                 if (productsResult.success) setAllProducts(productsResult.products || []);
                 if (discountsResult.success) setDiscounts(discountsResult.discounts || []);

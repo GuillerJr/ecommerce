@@ -314,9 +314,9 @@ export default function PointOfSaleClient({ allProducts, allDiscounts }: PointOf
                                             <span>-${couponDiscount.toFixed(2)}</span>
                                         </div>
                                     )}
-                                    {storeConfig && storeConfig.taxRate > 0 && (
+                                    {storeConfig && (storeConfig.taxRate || 0) > 0 && (
                                         <div className="flex justify-between">
-                                            <span>IVA ({storeConfig.taxRate}%)</span>
+                                            <span>IVA ({storeConfig.taxRate || 0}%)</span>
                                             <span>${taxAmount.toFixed(2)}</span>
                                         </div>
                                     )}

@@ -135,7 +135,7 @@ export default function SubcategoriesPageClient({ initialSubcategories, allCateg
     const onSubmit = async (data: SubcategoryFormValues) => {
       const result = editingSubcategory ?
         await updateSubcategoryAction({ ...editingSubcategory, ...data }) :
-        await addSubcategoryAction({ id: uuidv4(), ...data });
+        await addSubcategoryAction(data);
 
       if (result.success) {
         toast({ title: editingSubcategory ? "Subcategoría actualizada" : "Subcategoría creada" });
