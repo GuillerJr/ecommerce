@@ -9,6 +9,19 @@ import { v4 as uuidv4 } from 'uuid';
 
 const PATCH_PRICE = 5;
 const NAME_NUMBER_PRICE = 5;
+let paypalColumnsReady = false;
+
+async function ensurePaypalColumns(client: Awaited<ReturnType<typeof getClient>>) {
+    if (paypalColumnsReady) return;
+
+    await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS "paypalOrderId" TEXT');
+    await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS "paypalCaptureId" TEXT');
+    await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS "paypalCurrency" TEXT');
+    await client.query('CREATE UNIQUE INDEX IF NOT EXISTS orders_paypal_order_id_unique ON orders ("paypalOrderId") WHERE "paypalOrderId" IS NOT NULL');
+    await client.query('CREATE UNIQUE INDEX IF NOT EXISTS orders_paypal_capture_id_unique ON orders ("paypalCaptureId") WHERE "paypalCaptureId" IS NOT NULL');
+
+    paypalColumnsReady = true;
+}
 
 /**
  * Convierte una fila de la base de datos en un objeto Order.
@@ -36,6 +49,9 @@ const parseOrder = (row: any): Order => {
     items: row.items,
     trackingHistory: row.trackingHistory || [],
     paymentMethod: row.paymentMethod,
+    paypalOrderId: row.paypalOrderId,
+    paypalCaptureId: row.paypalCaptureId,
+    paypalCurrency: row.paypalCurrency,
     eInvoiceStatus: row.eInvoiceStatus,
     eInvoiceAuthorization: row.eInvoiceAuthorization,
   };
@@ -44,6 +60,100 @@ const parseOrder = (row: any): Order => {
 export async function getOrdersFromDb(): Promise<Order[]> {
     const result = await query<any>('SELECT * FROM orders ORDER BY date DESC');
     return result.map(parseOrder);
+}
+
+export async function attachPaypalOrderToDb(orderId: string, paypalOrderId: string, currency: string): Promise<Order> {
+    const client = await getClient();
+    try {
+        await client.query('BEGIN');
+        await ensurePaypalColumns(client);
+
+        const orderRes = await client.query('SELECT * FROM orders WHERE id = $1 FOR UPDATE', [orderId]);
+        if (orderRes.rows.length === 0) {
+            throw new Error('Pedido no encontrado.');
+        }
+
+        const order = parseOrder(orderRes.rows[0]);
+        if (order.paymentMethod !== 'PayPal') {
+            throw new Error('El pedido no usa PayPal como método de pago.');
+        }
+        if (order.paypalOrderId && order.paypalOrderId !== paypalOrderId) {
+            throw new Error('El pedido ya tiene otra orden de PayPal asociada.');
+        }
+
+        const updateRes = await client.query(
+            'UPDATE orders SET "paypalOrderId" = $1, "paypalCurrency" = $2 WHERE id = $3 RETURNING *',
+            [paypalOrderId, currency, orderId]
+        );
+
+        await client.query('COMMIT');
+        return parseOrder(updateRes.rows[0]);
+    } catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+    } finally {
+        client.release();
+    }
+}
+
+export async function markPaypalOrderCapturedInDb(orderId: string, paypalOrderId: string, captureId: string, amount: number, currency: string): Promise<Order> {
+    const client = await getClient();
+    try {
+        await client.query('BEGIN');
+        await ensurePaypalColumns(client);
+
+        const orderRes = await client.query('SELECT * FROM orders WHERE id = $1 FOR UPDATE', [orderId]);
+        if (orderRes.rows.length === 0) {
+            throw new Error('Pedido no encontrado.');
+        }
+
+        const order = parseOrder(orderRes.rows[0]);
+        if (order.paymentMethod !== 'PayPal') {
+            throw new Error('El pedido no usa PayPal como método de pago.');
+        }
+        if (order.paypalOrderId !== paypalOrderId) {
+            throw new Error('La orden de PayPal no coincide con el pedido pendiente.');
+        }
+        if (order.paypalCaptureId) {
+            throw new Error('Este pedido ya tiene una captura de PayPal registrada.');
+        }
+
+        const duplicateCapture = await client.query('SELECT id FROM orders WHERE "paypalCaptureId" = $1 AND id <> $2', [captureId, orderId]);
+        if (duplicateCapture.rows.length > 0) {
+            throw new Error('La transacción de PayPal ya fue registrada en otro pedido.');
+        }
+
+        const expectedCents = Math.round(Number(order.total) * 100);
+        const paidCents = Math.round(amount * 100);
+        if (expectedCents !== paidCents) {
+            throw new Error('El monto capturado en PayPal no coincide con el total del pedido.');
+        }
+        if (order.paypalCurrency && order.paypalCurrency !== currency) {
+            throw new Error('La moneda capturada en PayPal no coincide con el pedido.');
+        }
+
+        const trackingHistory = [
+            ...(order.trackingHistory || []),
+            {
+                status: 'Procesando' as OrderStatus,
+                date: new Date().toISOString(),
+                description: `Pago PayPal capturado. Transacción: ${captureId}.`,
+            },
+        ];
+
+        const updateRes = await client.query(
+            'UPDATE orders SET status = $1, "trackingHistory" = $2, "paypalCaptureId" = $3, "paypalCurrency" = $4 WHERE id = $5 RETURNING *',
+            ['Procesando', JSON.stringify(trackingHistory), captureId, currency, orderId]
+        );
+
+        await client.query('COMMIT');
+        return parseOrder(updateRes.rows[0]);
+    } catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+    } finally {
+        client.release();
+    }
 }
 export async function getOrderByIdFromDb(id: string): Promise<Order | null> {
     const result = await query<any>('SELECT * FROM orders WHERE id = $1', [id]);

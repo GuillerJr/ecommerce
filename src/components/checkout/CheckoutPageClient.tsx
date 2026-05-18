@@ -18,13 +18,13 @@ import { ShoppingBag, Tag, Home, Briefcase, User as UserIcon, LogIn, Loader2, Cr
 import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import type { Coupon, Address, StoreConfig, Product } from "@/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from '../ui/switch';
-import { createOrderAction, checkStockAction } from "@/lib/actions/orders";
+import { checkStockAction } from "@/lib/actions/orders";
 import { addAddressAction } from "@/lib/actions/users";
 import { getCouponByCodeAction } from "@/lib/actions/coupons";
 import { createPaypalOrderAction, capturePaypalOrderAction } from "@/lib/actions/paypal";
@@ -90,6 +90,7 @@ export default function CheckoutPageClient({ storeConfig }: { storeConfig: Store
   const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
   const [isPaymentStep, setIsPaymentStep] = useState(false);
   const [isVerifyingStock, setIsVerifyingStock] = useState(false);
+  const pendingPaypalOrderIdRef = useRef<string | null>(null);
 
   const subtotal = totalPrice;
   const priceAfterDiscount = Math.max(0, subtotal - couponDiscount);
@@ -196,51 +197,10 @@ export default function CheckoutPageClient({ storeConfig }: { storeConfig: Store
   };
   
   const handlePaypalSuccess = useCallback(async () => {
-    if (!selectedAddress || !storeConfig || !user) {
-        toast({ title: "Error", description: "Falta información para completar el pedido.", variant: "destructive" });
-        return;
-    }
-
-    let phoneNumber: string | undefined;
-    if (user.phone) {
-        let phoneObj;
-        try {
-            // Si user.phone es un string JSON, lo parseamos. Si ya es un objeto, lo usamos directamente.
-            phoneObj = typeof user.phone === 'string' ? JSON.parse(user.phone) : user.phone;
-            if (phoneObj && phoneObj.countryCode && phoneObj.number) {
-              phoneNumber = `${phoneObj.countryCode}${phoneObj.number}`;
-            }
-        } catch (e) {
-            console.error('Error parsing phone JSON from user object:', e);
-            phoneNumber = undefined;
-        }
-    }
-
-    const orderDetails = {
-        userId: user.id,
-        customerName: form.getValues('name'),
-        email: form.getValues('email'),
-        phone: phoneNumber,
-        identification: user.identification,
-        shippingAddress: selectedAddress,
-        paymentMethod: 'PayPal' as const
-    };
-
-    const result = await createOrderAction(
-        orderDetails,
-        cartItems,
-        storeConfig.taxRate || 0,
-        appliedCoupon?.code
-    );
-
-    if (result.success) {
-        toast({ title: "Pedido Realizado", description: "¡Gracias por tu compra! Tu pago ha sido procesado." });
-        clearCart();
-        router.push('/pedidos');
-    } else {
-        toast({ title: "Error en el pedido", description: result.message, variant: "destructive" });
-    }
-  }, [selectedAddress, storeConfig, user, form, cartItems, appliedCoupon?.code, toast, clearCart, router]);
+    toast({ title: "Pedido Realizado", description: "¡Gracias por tu compra! Tu pago ha sido procesado." });
+    clearCart();
+    router.push('/pedidos');
+  }, [toast, clearCart, router]);
   
   const handleContinueToPayment = async () => {
     setIsVerifyingStock(true);
@@ -391,8 +351,9 @@ export default function CheckoutPageClient({ storeConfig }: { storeConfig: Store
                                                   toast({ title: "Error", description: "Por favor, selecciona una dirección de envío.", variant: "destructive" });
                                                   throw new Error("No address selected");
                                               }
-                                              const result = await createPaypalOrderAction(finalPrice.toFixed(2), storeConfig.currency.code, selectedAddress);
-                                              if (result.success && result.orderId) {
+                                              const result = await createPaypalOrderAction(cartItems, appliedCoupon?.code, selectedAddress.id);
+                                              if (result.success && result.orderId && result.internalOrderId) {
+                                                  pendingPaypalOrderIdRef.current = result.internalOrderId;
                                                   return result.orderId;
                                               }
                                               toast({ title: "Error", description: result.message || "No se pudo crear el pedido de PayPal.", variant: "destructive" });
@@ -403,9 +364,14 @@ export default function CheckoutPageClient({ storeConfig }: { storeConfig: Store
                                                   toast({ title: "Error", description: "Por favor, selecciona una dirección de envío o la configuración no está disponible.", variant: "destructive" });
                                                   return;
                                               }
-                                              const captureResult = await capturePaypalOrderAction(data.orderID);
+                                              const internalOrderId = pendingPaypalOrderIdRef.current;
+                                              if (!internalOrderId) {
+                                                toast({ title: "Error en el pago", description: "No se encontró el pedido pendiente de PayPal.", variant: "destructive" });
+                                                return;
+                                              }
+                                              const captureResult = await capturePaypalOrderAction(data.orderID, internalOrderId);
                                               if (!captureResult.success) {
-                                                toast({ title: "Error en el pago", description: "No se pudo capturar el pago de PayPal.", variant: "destructive" });
+                                                toast({ title: "Error en el pago", description: captureResult.message || "No se pudo capturar el pago de PayPal.", variant: "destructive" });
                                                 return;
                                               }
                                               await handlePaypalSuccess();

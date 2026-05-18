@@ -95,6 +95,9 @@ export type Order = {
   items: OrderProduct[];
   trackingHistory: TrackingEvent[];
   paymentMethod?: 'PayPal' | 'Transferencia Bancaria' | 'Punto de Venta';
+  paypalOrderId?: string;
+  paypalCaptureId?: string;
+  paypalCurrency?: string;
   eInvoiceStatus?: 'PENDING' | 'AUTHORIZED' | 'REJECTED' | 'ERROR';
   eInvoiceAuthorization?: string;
 };

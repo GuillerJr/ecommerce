@@ -116,8 +116,14 @@ CREATE TABLE "orders" (
   "status" TEXT NOT NULL,
   "items" JSONB NOT NULL,
   "trackingHistory" JSONB NOT NULL,
-  "paymentMethod" TEXT
+  "paymentMethod" TEXT,
+  "paypalOrderId" TEXT,
+  "paypalCaptureId" TEXT,
+  "paypalCurrency" TEXT
 );
+
+CREATE UNIQUE INDEX "orders_paypal_order_id_unique" ON "orders" ("paypalOrderId") WHERE "paypalOrderId" IS NOT NULL;
+CREATE UNIQUE INDEX "orders_paypal_capture_id_unique" ON "orders" ("paypalCaptureId") WHERE "paypalCaptureId" IS NOT NULL;
 
 -- Crear la tabla de cupones
 CREATE TABLE "coupons" (

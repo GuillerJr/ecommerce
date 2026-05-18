@@ -74,6 +74,9 @@ export async function createOrderAction(orderData: { userId?: string, customerNa
         const currentUser = await requireUser();
         const storeConfig = await getStoreConfigFromDb();
         const isPosSale = orderData.paymentMethod === 'Punto de Venta';
+        if (orderData.paymentMethod === 'PayPal') {
+            return { success: false, message: 'Los pedidos de PayPal deben confirmarse desde el flujo seguro de PayPal.' };
+        }
         if (isPosSale) {
             await requirePermission('manage_pos');
         }
@@ -85,47 +88,48 @@ export async function createOrderAction(orderData: { userId?: string, customerNa
             identification: isPosSale ? orderData.identification : currentUser.identification,
         };
         const order = await createOrderInDb(trustedOrderData, items, storeConfig.taxRate || 0, couponCode);
-        
-        let eInvoicePdfBuffer: Buffer | undefined;
-
-        // --- E-Invoice Generation ---
-        if (storeConfig.isEInvoicingEnabled) {
-            try {
-                const allProducts = await getProductsFromDb();
-                const eInvoiceResult = await generateEInvoiceAction(order.id, allProducts);
-                if (eInvoiceResult.success && eInvoiceResult.pdfBuffer) {
-                    eInvoicePdfBuffer = eInvoiceResult.pdfBuffer;
-                } else {
-                  console.error("E-Invoice generation failed, generating generic receipt.", eInvoiceResult.message);
-                  const allProducts = await getProductsFromDb();
-                  const sequentialNumber = (await query<{nextInvoiceNumber: number}>('SELECT "nextInvoiceNumber" FROM store_config WHERE id=1'))[0].nextInvoiceNumber - 1;
-                  eInvoicePdfBuffer = await generateRidePdf(order, storeConfig, null, allProducts, String(sequentialNumber).padStart(9, '0'));
-                }
-            } catch (eInvoiceError: any) {
-                console.error(`Failed to generate e-invoice for order ${order.id}:`, eInvoiceError.message);
-                 const allProducts = await getProductsFromDb();
-                 eInvoicePdfBuffer = await generateRidePdf(order, storeConfig, null, allProducts, order.id.substring(0,9));
-            }
-        } else {
-             const allProducts = await getProductsFromDb();
-             eInvoicePdfBuffer = await generateRidePdf(order, storeConfig, null, allProducts, order.id.substring(0,9));
-        }
-        // --- End E-Invoice Generation ---
-
-        // Only sends confirmation email if it's not a placeholder POS email
-        if (!order.email.endsWith('@hacktrick.store')) {
-            await sendOrderConfirmationEmail(order, eInvoicePdfBuffer);
-        }
-
-        revalidatePath('/pedidos');
-        revalidatePath('/admin/pedidos');
-        revalidatePath('/admin/dashboard');
+        await finalizeOrderAfterPayment(order);
         return { success: true, order: JSON.parse(JSON.stringify(order)) };
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Ocurrió un error desconocido.';
         console.error("Error creating order in createOrderAction:", errorMessage);
         return { success: false, message: `Error al crear el pedido: ${errorMessage}` };
     }
+}
+
+export async function finalizeOrderAfterPayment(order: Order) {
+    const storeConfig = await getStoreConfigFromDb();
+    let eInvoicePdfBuffer: Buffer | undefined;
+
+    if (storeConfig.isEInvoicingEnabled) {
+        try {
+            const allProducts = await getProductsFromDb();
+            const eInvoiceResult = await generateEInvoiceAction(order.id, allProducts);
+            if (eInvoiceResult.success && eInvoiceResult.pdfBuffer) {
+                eInvoicePdfBuffer = eInvoiceResult.pdfBuffer;
+            } else {
+                console.error("E-Invoice generation failed, generating generic receipt.", eInvoiceResult.message);
+                const allProducts = await getProductsFromDb();
+                const sequentialNumber = (await query<{nextInvoiceNumber: number}>('SELECT "nextInvoiceNumber" FROM store_config WHERE id=1'))[0].nextInvoiceNumber - 1;
+                eInvoicePdfBuffer = await generateRidePdf(order, storeConfig, null, allProducts, String(sequentialNumber).padStart(9, '0'));
+            }
+        } catch (eInvoiceError: any) {
+            console.error(`Failed to generate e-invoice for order ${order.id}:`, eInvoiceError.message);
+            const allProducts = await getProductsFromDb();
+            eInvoicePdfBuffer = await generateRidePdf(order, storeConfig, null, allProducts, order.id.substring(0,9));
+        }
+    } else {
+        const allProducts = await getProductsFromDb();
+        eInvoicePdfBuffer = await generateRidePdf(order, storeConfig, null, allProducts, order.id.substring(0,9));
+    }
+
+    if (!order.email.endsWith('@hacktrick.store')) {
+        await sendOrderConfirmationEmail(order, eInvoicePdfBuffer);
+    }
+
+    revalidatePath('/pedidos');
+    revalidatePath('/admin/pedidos');
+    revalidatePath('/admin/dashboard');
 }
 
 export async function updateOrderStatusAction(orderId: string, newStatus: Order['status'], adminUserId: string) {
