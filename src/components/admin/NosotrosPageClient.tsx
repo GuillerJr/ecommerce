@@ -86,7 +86,7 @@ export default function NosotrosPageClient({ initialConfig, icons }: NosotrosPag
           <Info className="h-6 w-6 text-muted-foreground" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold">Página "Nosotros"</h1>
+          <h1 className="text-3xl font-bold">Página &quot;Nosotros&quot;</h1>
           <p className="text-muted-foreground">Gestiona el contenido de la página de información de la empresa.</p>
         </div>
       </div>

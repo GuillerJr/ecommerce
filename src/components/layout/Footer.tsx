@@ -20,7 +20,7 @@ function FooterClientContent({ storeConfig }: { storeConfig: StoreConfig }) {
   return (
       <div className="mt-8 pt-8 border-t text-center text-sm space-y-1">
         <p>© {currentYear} {storeConfig.name}. Todos los derechos reservados.</p>
-        {storeConfig.socials.linkedin && <p className="text-muted-foreground text-xs">Sistema creado por <a href={storeConfig.socials.linkedin} target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:text-primary hover:underline">HackTrick's</a>.</p>}
+        {storeConfig.socials.linkedin && <p className="text-muted-foreground text-xs">Sistema creado por <a href={storeConfig.socials.linkedin} target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:text-primary hover:underline">HackTrick&apos;s</a>.</p>}
       </div>
   )
 }

@@ -418,7 +418,7 @@ export default function UsersPageClient({ initialUsers }: UsersPageClientProps) 
                 <DialogHeader>
                   <DialogTitle>Crear Nuevo Usuario</DialogTitle>
                   <DialogDescription>
-                    Rellena los datos para el nuevo usuario. La cuenta se creará como 'Activa'.
+                    Rellena los datos para el nuevo usuario. La cuenta se creará como &apos;Activa&apos;.
                   </DialogDescription>
                 </DialogHeader>
                 <Form {...createForm}>

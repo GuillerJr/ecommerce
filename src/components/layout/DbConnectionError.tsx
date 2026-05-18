@@ -18,6 +18,7 @@ import { DatabaseZap } from 'lucide-react';
 export default function DbConnectionError() {
   return (
     <html lang="es">
+      {/* eslint-disable-next-line @next/next/no-head-element */}
       <head>
         <title>Error de Conexión</title>
         {/* Estilos en línea para asegurar que se apliquen sin depender de archivos CSS externos */}

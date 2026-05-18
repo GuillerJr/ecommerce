@@ -207,7 +207,7 @@ export default function RolesPageClient({ initialRoles }: RolesPageClientProps) 
             <Card>
                 <CardHeader>
                     <CardTitle>Roles Definidos</CardTitle>
-                    <CardDescription>Roles base como 'admin' y 'user' no pueden ser modificados o eliminados.</CardDescription>
+                    <CardDescription>Roles base como &apos;admin&apos; y &apos;user&apos; no pueden ser modificados o eliminados.</CardDescription>
                 </CardHeader>
                 <CardContent>
                      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
