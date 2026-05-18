@@ -10,7 +10,7 @@ export async function createSqlDumpFromDb(): Promise<{ filename: string; content
     let sqlContent = '';
 
     for (const table of tablesToBackup) {
-        const rows = await query(`SELECT * FROM ${table}`);
+        const rows = await query<Record<string, unknown>>(`SELECT * FROM ${table}`);
         if (rows.length > 0) {
             const columns = Object.keys(rows[0]).join(', ');
             sqlContent += `\n-- Data for table ${table}\n`;

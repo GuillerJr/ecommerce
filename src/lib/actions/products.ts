@@ -182,7 +182,7 @@ export async function importProductStockFromXlsx(base64Data: string) {
         
         const buffer = Buffer.from(base64Data, 'base64');
         const workbook = new ExcelJS.Workbook();
-        await workbook.xlsx.load(buffer);
+        await workbook.xlsx.load(buffer as any);
         
         const worksheet = workbook.getWorksheet(1);
         if (!worksheet) {
@@ -191,8 +191,9 @@ export async function importProductStockFromXlsx(base64Data: string) {
 
         let updatedCount = 0;
         const headerRow = worksheet.getRow(1);
-        const idCol = headerRow.values!.indexOf('id');
-        const stockCol = headerRow.values!.indexOf('stock');
+        const headerValues = Array.isArray(headerRow.values) ? headerRow.values : [];
+        const idCol = headerValues.indexOf('id');
+        const stockCol = headerValues.indexOf('stock');
 
         if (idCol === -1 || stockCol === -1) {
             throw new Error("El archivo debe contener las columnas 'id' y 'stock'.");
@@ -242,7 +243,7 @@ export async function importProductsFromXlsx(base64Data: string, userId: string)
         
         const buffer = Buffer.from(base64Data, 'base64');
         const workbook = new ExcelJS.Workbook();
-        await workbook.xlsx.load(buffer);
+        await workbook.xlsx.load(buffer as any);
         const worksheet = workbook.getWorksheet(1);
         if (!worksheet) {
             throw new Error("No se encontró una hoja en el archivo XLSX.");
